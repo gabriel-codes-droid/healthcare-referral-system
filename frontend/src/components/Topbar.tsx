@@ -1,6 +1,14 @@
-import { Bell, CalendarDays, ChevronDown, MessageSquare, Search } from 'lucide-react';
+import { Bell, CalendarDays, ChevronDown, LogOut, MessageSquare, Search } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 export default function Topbar() {
+  const { user, logout } = useAuth();
+  const today = new Date().toLocaleDateString('en-US', {
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric'
+  });
+
   return (
     <header className="topbar">
       <label className="search-box">
@@ -10,26 +18,28 @@ export default function Topbar() {
       </label>
 
       <div className="topbar-actions">
-        <button className="date-button">
+        <button type="button" className="date-button">
           <CalendarDays size={17} />
-          May 22, 2025
+          {today}
           <ChevronDown size={16} />
         </button>
-        <button className="icon-button" aria-label="Notifications">
+        <button type="button" className="icon-button" aria-label="Notifications">
           <Bell size={18} />
           <span>3</span>
         </button>
-        <button className="icon-button" aria-label="Messages">
+        <button type="button" className="icon-button" aria-label="Messages">
           <MessageSquare size={18} />
           <span>5</span>
         </button>
         <div className="profile">
-          <img src="https://i.pravatar.cc/80?img=13" alt="Dr. Robert Fox" />
+          <img src={user?.avatar || 'https://i.pravatar.cc/80?img=13'} alt={user?.name} />
           <div>
-            <strong>Dr. Robert Fox</strong>
-            <p>Super Admin</p>
+            <strong>{user?.name}</strong>
+            <p>{user?.role === 'admin' ? 'Super Admin' : user?.organization}</p>
           </div>
-          <ChevronDown size={16} />
+          <button type="button" className="logout-btn" onClick={logout} aria-label="Logout">
+            <LogOut size={16} />
+          </button>
         </div>
       </div>
     </header>

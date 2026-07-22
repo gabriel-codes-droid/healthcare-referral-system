@@ -1,57 +1,27 @@
-const referrals = [
-  {
-    patient: 'John Cooper',
-    from: 'City Clinic',
-    to: 'City Hospital',
-    reason: 'Cardiology Consultation',
-    status: 'Pending',
-    date: 'May 22, 2025',
-    avatar: 'https://i.pravatar.cc/80?img=32'
-  },
-  {
-    patient: 'Jane Smith',
-    from: 'Health Plus',
-    to: 'Metro Hospital',
-    reason: 'Orthopedic Evaluation',
-    status: 'Accepted',
-    date: 'May 21, 2025',
-    avatar: 'https://i.pravatar.cc/80?img=47'
-  },
-  {
-    patient: 'Robert Johnson',
-    from: 'Care Clinic',
-    to: 'City Hospital',
-    reason: 'Neurology Consultation',
-    status: 'Rejected',
-    date: 'May 20, 2025',
-    avatar: 'https://i.pravatar.cc/80?img=12'
-  },
-  {
-    patient: 'Emily Davis',
-    from: 'City Clinic',
-    to: 'Metro Hospital',
-    reason: 'Blood Test',
-    status: 'Accepted',
-    date: 'May 20, 2025',
-    avatar: 'https://i.pravatar.cc/80?img=44'
-  },
-  {
-    patient: 'Michael Brown',
-    from: 'Health Plus',
-    to: 'City Hospital',
-    reason: 'General Surgery',
-    status: 'Pending',
-    date: 'May 19, 2025',
-    avatar: 'https://i.pravatar.cc/80?img=59'
-  }
-];
+import type { Referral } from '../Types';
 
-export default function ReferralTable() {
+type Props = {
+  referrals: Referral[];
+  onViewAll?: () => void;
+};
+
+function formatDate(dateStr: string) {
+  return new Date(dateStr).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric'
+  });
+}
+
+export default function ReferralTable({ referrals, onViewAll }: Props) {
   return (
+    <>
     <section className="panel referral-table">
       <div className="panel-header">
         <h2>Recent Referrals</h2>
-        <button>View all</button>
+        <button type="button" onClick={onViewAll}>
+          View all
+        </button>
       </div>
       <div className="table-wrap">
         <table>
@@ -66,26 +36,38 @@ export default function ReferralTable() {
             </tr>
           </thead>
           <tbody>
-            {referrals.map((referral) => (
-              <tr key={`${referral.patient}-${referral.date}`}>
-                <td>
-                  <div className="patient-cell">
-                    <img src={referral.avatar} alt={referral.patient} />
-                    <span>{referral.patient}</span>
-                  </div>
+            {referrals.length === 0 ? (
+              <tr>
+                <td colSpan={6} className="empty-cell">
+                  No referrals yet
                 </td>
-                <td>{referral.from}</td>
-                <td>{referral.to}</td>
-                <td>{referral.reason}</td>
-                <td>
-                  <span className={`status ${referral.status.toLowerCase()}`}>{referral.status}</span>
-                </td>
-                <td>{referral.date}</td>
               </tr>
-            ))}
+            ) : (
+              referrals.map((referral) => (
+                <tr key={referral.id}>
+                  <td>
+                    <div className="patient-cell">
+                      <img
+                        src={referral.patientAvatar || `https://i.pravatar.cc/80?u=${referral.patientName}`}
+                        alt={referral.patientName}
+                      />
+                      <span>{referral.patientName}</span>
+                    </div>
+                  </td>
+                  <td>{referral.fromOrganization}</td>
+                  <td>{referral.toOrganization}</td>
+                  <td>{referral.reason}</td>
+                  <td>
+                    <span className={`status ${referral.status}`}>{referral.status}</span>
+                  </td>
+                  <td>{formatDate(referral.createdAt)}</td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>
     </section>
+    </>
   );
 }

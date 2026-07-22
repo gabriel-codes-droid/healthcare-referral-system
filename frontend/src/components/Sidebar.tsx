@@ -1,3 +1,4 @@
+import { NavLink } from 'react-router-dom';
 import {
   Activity,
   Bell,
@@ -13,22 +14,25 @@ import {
   Stethoscope,
   Users
 } from 'lucide-react';
+import { useTheme } from '../context/ThemeContext';
 
 const navItems = [
-  { label: 'Dashboard', icon: Home, active: true },
-  { label: 'Patients', icon: Users },
-  { label: 'Appointments', icon: CalendarDays },
-  { label: 'Referrals', icon: ClipboardList },
-  { label: 'Doctors', icon: Stethoscope },
-  { label: 'Hospitals', icon: Building2 },
-  { label: 'Laboratories', icon: FlaskConical },
-  { label: 'Reports', icon: FileBarChart },
-  { label: 'Messages', icon: MessageSquare },
-  { label: 'Billing', icon: CreditCard },
-  { label: 'Settings', icon: Settings }
+  { label: 'Dashboard', icon: Home, path: '/' },
+  { label: 'Patients', icon: Users, path: '/patients' },
+  { label: 'Appointments', icon: CalendarDays, path: '/appointments' },
+  { label: 'Referrals', icon: ClipboardList, path: '/referrals' },
+  { label: 'Doctors', icon: Stethoscope, path: '/doctors' },
+  { label: 'Hospitals', icon: Building2, path: '/hospitals' },
+  { label: 'Laboratories', icon: FlaskConical, path: '/laboratories' },
+  { label: 'Reports', icon: FileBarChart, path: '/reports' },
+  { label: 'Messages', icon: MessageSquare, path: '/messages' },
+  { label: 'Billing', icon: CreditCard, path: '/billing' },
+  { label: 'Settings', icon: Settings, path: '/settings' }
 ];
 
 export default function Sidebar() {
+  const { theme, toggleTheme } = useTheme();
+
   return (
     <aside className="sidebar">
       <div className="brand">
@@ -42,10 +46,15 @@ export default function Sidebar() {
         {navItems.map((item) => {
           const Icon = item.icon;
           return (
-            <button className={`nav-item ${item.active ? 'active' : ''}`} key={item.label}>
+            <NavLink
+              to={item.path}
+              end={item.path === '/'}
+              className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+              key={item.label}
+            >
               <Icon size={18} />
               <span>{item.label}</span>
-            </button>
+            </NavLink>
           );
         })}
       </nav>
@@ -54,12 +63,12 @@ export default function Sidebar() {
         <Bell size={18} />
         <strong>Upgrade Plan</strong>
         <p>Unlock analytics, hospital routing, and advanced reporting tools.</p>
-        <button>Upgrade Now</button>
+        <button type="button">Upgrade Now</button>
       </div>
 
       <label className="mode-toggle">
-        <span>Dark Mode</span>
-        <input type="checkbox" defaultChecked />
+        <span>{theme === 'dark' ? 'Dark Mode' : 'Light Mode'}</span>
+        <input type="checkbox" checked={theme === 'dark'} onChange={toggleTheme} />
       </label>
     </aside>
   );
