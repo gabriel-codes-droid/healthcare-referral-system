@@ -3,6 +3,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import Layout from './components/Layout';
 import Login from './Pages/Login';
+import Register from './Pages/Register';
 import Dashboard from './Pages/Dashboard';
 import Patients from './Pages/Patients';
 import Referrals from './Pages/Referrals';
@@ -39,6 +40,10 @@ function AppRoutes() {
       <Route
         path="/login"
         element={user ? <Navigate to="/" replace /> : <Login />}
+      />
+      <Route
+        path="/register"
+        element={user ? <Navigate to="/" replace /> : <Register />}
       />
       <Route
         element={

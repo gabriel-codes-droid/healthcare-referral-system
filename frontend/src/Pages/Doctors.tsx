@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Star } from 'lucide-react';
+import { Star, ArrowLeft } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { api } from '../services/api';
 import type { Doctor } from '../Types';
 
@@ -14,6 +15,9 @@ export default function Doctors() {
     <>
       <div className="page-header">
         <div>
+          <Link to="/" className="back-link-header">
+            <ArrowLeft size={16} /> Back to Dashboard
+          </Link>
           <h1>Doctors</h1>
           <p>Specialists across the Sympra network</p>
         </div>

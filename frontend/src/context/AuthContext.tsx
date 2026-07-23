@@ -6,6 +6,7 @@ type AuthContextType = {
   user: User | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
+  signup: (name: string, email: string, password: string, role?: string, organization?: string) => Promise<void>;
   logout: () => void;
 };
 
@@ -35,13 +36,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(loggedInUser);
   };
 
+  const signup = async (name: string, email: string, password: string, role?: string, organization?: string) => {
+    const { token, user: registeredUser } = await api.signup(name, email, password, role, organization);
+    localStorage.setItem('sympra_token', token);
+    setUser(registeredUser);
+  };
+
   const logout = () => {
     localStorage.removeItem('sympra_token');
     setUser(null);
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>{children}</AuthContext.Provider>
+    <AuthContext.Provider value={{ user, loading, login, signup, logout }}>{children}</AuthContext.Provider>
   );
 }
 

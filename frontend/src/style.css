@@ -494,6 +494,13 @@ a { color: inherit; text-decoration: none; }
   font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  transition: background 0.15s;
+}
+
+.panel-header button:hover {
+  background: var(--primary-soft);
 }
 
 /* Donut chart */
@@ -755,6 +762,20 @@ tbody tr:hover { background: var(--primary-soft); }
   gap: 1rem;
 }
 
+.back-link-header {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-bottom: 0.5rem;
+  transition: color 0.15s;
+}
+
+.back-link-header:hover {
+  color: var(--primary);
+}
+
 .page-header p {
   margin-top: 0.35rem;
   color: var(--text-muted);
@@ -923,6 +944,21 @@ tbody tr:hover { background: var(--primary-soft); }
   width: 100%;
   max-width: 420px;
   box-shadow: var(--shadow-lg);
+  position: relative;
+}
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-bottom: 1rem;
+  transition: color 0.15s;
+}
+
+.back-link:hover {
+  color: var(--primary);
 }
 
 .login-brand {
@@ -989,7 +1025,127 @@ tbody tr:hover { background: var(--primary-soft); }
 
 .demo-btn:hover { border-color: var(--primary); color: var(--primary); }
 
+.auth-switch {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  margin-bottom: 1rem;
+  font-size: 0.875rem;
+}
+
+.auth-switch p {
+  color: var(--text-muted);
+}
+
+.auth-switch a {
+  color: var(--primary);
+  font-weight: 600;
+  transition: color 0.15s;
+}
+
+.auth-switch a:hover {
+  color: #2563eb;
+}
+
 .login-toggle { margin-top: 1.25rem; }
+
+/* Dropdown panels */
+.dropdown-panel {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  width: 320px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+  z-index: 100;
+  margin-top: 0.5rem;
+}
+
+.notifications-panel {
+  right: 120px;
+}
+
+.messages-panel {
+  right: 80px;
+}
+
+.dropdown-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.dropdown-header h3 {
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.dropdown-header button {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 4px;
+  transition: background 0.15s;
+}
+
+.dropdown-header button:hover {
+  background: var(--bg-input);
+  color: var(--text-h);
+}
+
+.dropdown-content {
+  max-height: 300px;
+  overflow-y: auto;
+  padding: 0.5rem;
+}
+
+.notification-item,
+.message-item {
+  padding: 0.75rem;
+  border-radius: var(--radius-sm);
+  margin-bottom: 0.25rem;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.notification-item:hover,
+.message-item:hover {
+  background: var(--bg-input);
+}
+
+.notification-item.unread,
+.message-item.unread {
+  background: var(--primary-soft);
+  border-left: 3px solid var(--primary);
+}
+
+.notification-item p,
+.message-item p {
+  margin: 0 0 0.25rem 0;
+  font-size: 0.85rem;
+  color: var(--text-h);
+}
+
+.notification-item small,
+.message-item small {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.message-item strong {
+  display: block;
+  font-size: 0.85rem;
+  margin-bottom: 0.25rem;
+  color: var(--text-h);
+}
 
 /* Loading */
 .loading-screen {

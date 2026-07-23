@@ -32,6 +32,12 @@ export const api = {
       body: JSON.stringify({ email, password })
     }),
 
+  signup: (name: string, email: string, password: string, role?: string, organization?: string) =>
+    request<{ token: string; user: import('../Types').User }>('/auth/signup', {
+      method: 'POST',
+      body: JSON.stringify({ name, email, password, role, organization })
+    }),
+
   getMe: () => request<import('../Types').User>('/auth/me'),
 
   getPatients: () => request<import('../Types').Patient[]>('/patients'),

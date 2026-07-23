@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Plus, Upload } from 'lucide-react';
+import { Plus, Upload, ArrowLeft } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import Modal from '../components/Modal';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
@@ -78,6 +79,9 @@ export default function Laboratories() {
     <>
       <div className="page-header">
         <div>
+          <Link to="/" className="back-link-header">
+            <ArrowLeft size={16} /> Back to Dashboard
+          </Link>
           <h1>Laboratories</h1>
           <p>Request lab tests and upload results</p>
         </div>

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Plus } from 'lucide-react';
+import { Plus, ArrowLeft } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import Modal from '../components/Modal';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
@@ -50,6 +51,9 @@ export default function Appointments() {
     <>
       <div className="page-header">
         <div>
+          <Link to="/" className="back-link-header">
+            <ArrowLeft size={16} /> Back to Dashboard
+          </Link>
           <h1>Appointments</h1>
           <p>Scheduled visits from accepted referrals and direct bookings</p>
         </div>

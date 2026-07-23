@@ -1,13 +1,30 @@
-import { Bell, CalendarDays, ChevronDown, LogOut, MessageSquare, Search } from 'lucide-react';
+import { Bell, CalendarDays, ChevronDown, LogOut, MessageSquare, Search, Sun, Moon, X } from 'lucide-react';
+import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 
 export default function Topbar() {
   const { user, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [showMessages, setShowMessages] = useState(false);
   const today = new Date().toLocaleDateString('en-US', {
     month: 'long',
     day: 'numeric',
     year: 'numeric'
   });
+
+  const notifications = [
+    { id: 1, message: 'New referral received for John Cooper', time: '5 min ago', unread: true },
+    { id: 2, message: 'Appointment confirmed with Dr. Wilson', time: '1 hour ago', unread: true },
+    { id: 3, message: 'Lab results uploaded for Jane Smith', time: '2 hours ago', unread: false }
+  ];
+
+  const messages = [
+    { id: 1, sender: 'Dr. Wilson', message: 'Patient is ready for referral', time: '10 min ago', unread: true },
+    { id: 2, sender: 'City Hospital', message: 'Appointment slot available', time: '30 min ago', unread: true },
+    { id: 3, sender: 'Metro Lab', message: 'Test results pending review', time: '1 hour ago', unread: false }
+  ];
 
   return (
     <header className="topbar">
@@ -23,13 +40,31 @@ export default function Topbar() {
           {today}
           <ChevronDown size={16} />
         </button>
-        <button type="button" className="icon-button" aria-label="Notifications">
-          <Bell size={18} />
-          <span>3</span>
+        <button
+          type="button"
+          className="icon-button"
+          onClick={toggleTheme}
+          aria-label="Toggle theme"
+        >
+          {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
         </button>
-        <button type="button" className="icon-button" aria-label="Messages">
+        <button
+          type="button"
+          className="icon-button"
+          onClick={() => setShowNotifications(!showNotifications)}
+          aria-label="Notifications"
+        >
+          <Bell size={18} />
+          <span>{notifications.filter(n => n.unread).length}</span>
+        </button>
+        <button
+          type="button"
+          className="icon-button"
+          onClick={() => setShowMessages(!showMessages)}
+          aria-label="Messages"
+        >
           <MessageSquare size={18} />
-          <span>5</span>
+          <span>{messages.filter(m => m.unread).length}</span>
         </button>
         <div className="profile">
           <img src={user?.avatar || 'https://i.pravatar.cc/80?img=13'} alt={user?.name} />
@@ -42,6 +77,53 @@ export default function Topbar() {
           </button>
         </div>
       </div>
+
+      {showNotifications && (
+        <div className="dropdown-panel notifications-panel">
+          <div className="dropdown-header">
+            <h3>Notifications</h3>
+            <button onClick={() => setShowNotifications(false)} aria-label="Close">
+              <X size={16} />
+            </button>
+          </div>
+          <div className="dropdown-content">
+            {notifications.length === 0 ? (
+              <p className="empty-text">No notifications</p>
+            ) : (
+              notifications.map((notif) => (
+                <div key={notif.id} className={`notification-item ${notif.unread ? 'unread' : ''}`}>
+                  <p>{notif.message}</p>
+                  <small>{notif.time}</small>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      )}
+
+      {showMessages && (
+        <div className="dropdown-panel messages-panel">
+          <div className="dropdown-header">
+            <h3>Messages</h3>
+            <button onClick={() => setShowMessages(false)} aria-label="Close">
+              <X size={16} />
+            </button>
+          </div>
+          <div className="dropdown-content">
+            {messages.length === 0 ? (
+              <p className="empty-text">No messages</p>
+            ) : (
+              messages.map((msg) => (
+                <div key={msg.id} className={`message-item ${msg.unread ? 'unread' : ''}`}>
+                  <strong>{msg.sender}</strong>
+                  <p>{msg.message}</p>
+                  <small>{msg.time}</small>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      )}
     </header>
   );
 }

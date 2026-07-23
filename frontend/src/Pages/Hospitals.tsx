@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Building2, FlaskConical, Stethoscope } from 'lucide-react';
+import { Building2, FlaskConical, Stethoscope, ArrowLeft } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { api } from '../services/api';
 import type { Hospital } from '../Types';
 
@@ -20,6 +21,9 @@ export default function Hospitals() {
     <>
       <div className="page-header">
         <div>
+          <Link to="/" className="back-link-header">
+            <ArrowLeft size={16} /> Back to Dashboard
+          </Link>
           <h1>Hospitals & Clinics</h1>
           <p>Network facilities for referrals and care</p>
         </div>

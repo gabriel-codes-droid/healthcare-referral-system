@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Check, Plus, X } from 'lucide-react';
+import { Check, Plus, X, ArrowLeft } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import Modal from '../components/Modal';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
@@ -113,6 +114,9 @@ export default function Referrals() {
     <>
       <div className="page-header">
         <div>
+          <Link to="/" className="back-link-header">
+            <ArrowLeft size={16} /> Back to Dashboard
+          </Link>
           <h1>Referrals</h1>
           <p>
             {user?.role === 'hospital'

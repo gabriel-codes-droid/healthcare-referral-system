@@ -47,4 +47,40 @@ router.get('/me', (req, res) => {
   }
 });
 
+router.post('/signup', (req, res) => {
+  const { name, email, password, role, organization } = req.body;
+  if (!name || !email || !password) {
+    return res.status(400).json({ error: 'Name, email, and password are required' });
+  }
+
+  const db = readDb();
+  const existingUser = db.users.find((u) => u.email === email);
+  if (existingUser) {
+    return res.status(409).json({ error: 'Email already registered' });
+  }
+
+  const newUser = {
+    id: `user-${Date.now()}`,
+    name,
+    email,
+    password,
+    role: role || 'clinic',
+    organization: organization || 'Independent',
+    avatar: `https://i.pravatar.cc/80?u=${email}`
+  };
+
+  db.users.push(newUser);
+  const { writeDb } = require('../db');
+  writeDb(db);
+
+  const token = jwt.sign(
+    { id: newUser.id, email: newUser.email, role: newUser.role, name: newUser.name, organization: newUser.organization },
+    JWT_SECRET,
+    { expiresIn: '24h' }
+  );
+
+  const { password: _, ...safeUser } = newUser;
+  res.status(201).json({ token, user: safeUser });
+});
+
 module.exports = router;

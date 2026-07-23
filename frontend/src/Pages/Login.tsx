@@ -1,5 +1,6 @@
 import { Activity, Loader2 } from 'lucide-react';
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 
@@ -93,6 +94,11 @@ export default function Login() {
               </button>
             ))}
           </div>
+        </div>
+
+        <div className="auth-switch">
+          <p>Don't have an account?</p>
+          <Link to="/register">Sign up</Link>
         </div>
 
         <label className="mode-toggle login-toggle">

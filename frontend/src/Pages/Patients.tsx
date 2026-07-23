@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Plus, Stethoscope } from 'lucide-react';
+import { Plus, Stethoscope, ArrowLeft } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import Modal from '../components/Modal';
 import { api } from '../services/api';
 import type { Patient } from '../Types';
@@ -65,6 +66,9 @@ export default function Patients() {
     <>
       <div className="page-header">
         <div>
+          <Link to="/" className="back-link-header">
+            <ArrowLeft size={16} /> Back to Dashboard
+          </Link>
           <h1>Patients</h1>
           <p>Register and manage patient records</p>
         </div>
