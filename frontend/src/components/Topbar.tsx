@@ -1,4 +1,4 @@
-import { Bell, CalendarDays, ChevronDown, LogOut, MessageSquare, Search, Sun, Moon, X } from 'lucide-react';
+import { Bell, CalendarDays, ChevronDown, LogOut, MessageSquare, Search, Sun, Moon, X, Menu } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
@@ -8,6 +8,7 @@ export default function Topbar() {
   const { theme, toggleTheme } = useTheme();
   const [showNotifications, setShowNotifications] = useState(false);
   const [showMessages, setShowMessages] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const today = new Date().toLocaleDateString('en-US', {
     month: 'long',
     day: 'numeric',
@@ -28,6 +29,14 @@ export default function Topbar() {
 
   return (
     <header className="topbar">
+      <button
+        type="button"
+        className="mobile-menu-btn"
+        onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+        aria-label="Toggle menu"
+      >
+        <Menu size={20} />
+      </button>
       <label className="search-box">
         <Search size={18} />
         <input placeholder="Search patients, appointments..." />
@@ -67,7 +76,10 @@ export default function Topbar() {
           <span>{messages.filter(m => m.unread).length}</span>
         </button>
         <div className="profile">
-          <img src={user?.avatar || 'https://i.pravatar.cc/80?img=13'} alt={user?.name} />
+         <img 
+  src={user?.avatar || `https://ui-avatars.com{encodeURIComponent(user?.name || 'User')}&background=0D8ABC&color=fff`} 
+  alt={user?.name || "User profile"} 
+/>
           <div>
             <strong>{user?.name}</strong>
             <p>{user?.role === 'admin' ? 'Super Admin' : user?.organization}</p>
