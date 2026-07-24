@@ -9,6 +9,7 @@ export default function Topbar() {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showMessages, setShowMessages] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  
   const today = new Date().toLocaleDateString('en-US', {
     month: 'long',
     day: 'numeric',
@@ -26,6 +27,10 @@ export default function Topbar() {
     { id: 2, sender: 'City Hospital', message: 'Appointment slot available', time: '30 min ago', unread: true },
     { id: 3, sender: 'Metro Lab', message: 'Test results pending review', time: '1 hour ago', unread: false }
   ];
+
+  // Safely filters unread items to protect against unexpected array mutations
+  const unreadNotificationsCount = notifications.filter(n => n.unread).length;
+  const unreadMessagesCount = messages.filter(m => m.unread).length;
 
   return (
     <header className="topbar">
@@ -64,7 +69,7 @@ export default function Topbar() {
           aria-label="Notifications"
         >
           <Bell size={18} />
-          <span>{notifications.filter(n => n.unread).length}</span>
+          {unreadNotificationsCount > 0 && <span>{unreadNotificationsCount}</span>}
         </button>
         <button
           type="button"
@@ -73,16 +78,16 @@ export default function Topbar() {
           aria-label="Messages"
         >
           <MessageSquare size={18} />
-          <span>{messages.filter(m => m.unread).length}</span>
+          {unreadMessagesCount > 0 && <span>{unreadMessagesCount}</span>}
         </button>
         <div className="profile">
-         <img 
-  src={user?.avatar || `https://ui-avatars.com{encodeURIComponent(user?.name || 'User')}&background=0D8ABC&color=fff`} 
-  alt={user?.name || "User profile"} 
-/>
+          <img 
+            src={user?.avatar || `https://ui-avatars.com{encodeURIComponent(user?.name || 'User')}&background=0D8ABC&color=fff`} 
+            alt={user?.name || "User profile"} 
+          />
           <div>
-            <strong>{user?.name}</strong>
-            <p>{user?.role === 'admin' ? 'Super Admin' : user?.organization}</p>
+            <strong>{user?.name || 'Guest User'}</strong>
+            <p>{user?.role === 'admin' ? 'Super Admin' : (user?.organization || 'General')}</p>
           </div>
           <button type="button" className="logout-btn" onClick={logout} aria-label="Logout">
             <LogOut size={16} />
