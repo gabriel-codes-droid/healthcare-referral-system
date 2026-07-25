@@ -6,9 +6,9 @@ import { useTheme } from '../context/ThemeContext';
 export default function Topbar() {
   const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
-  const [showNotifications, setShowNotifications] = useState(false);
-  const [showMessages, setShowMessages] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(true);
+  const [showMessages, setShowMessages] = useState(true);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(true);
   
   const today = new Date().toLocaleDateString('en-US', {
     month: 'long',
