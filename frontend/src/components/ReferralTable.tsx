@@ -19,9 +19,11 @@ export default function ReferralTable({ referrals, onViewAll }: Props) {
     <section className="panel referral-table">
       <div className="panel-header">
         <h2>Recent Referrals</h2>
-        <button type="button" onClick={onViewAll}>
-          View all
-        </button>
+        {onViewAll && (
+          <button type="button" onClick={onViewAll} className="view-all-btn">
+            View all
+          </button>
+        )}
       </div>
       <div className="table-wrap">
         <table>

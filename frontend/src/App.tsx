@@ -11,6 +11,7 @@ import Appointments from './Pages/Appointments';
 import Laboratories from './Pages/Laboratories';
 import Doctors from './Pages/Doctors';
 import Hospitals from './Pages/Hospitals';
+import Settings from './Pages/Settings';
 import PlaceholderPage from './Pages/PlaceholderPage';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -64,16 +65,8 @@ function AppRoutes() {
           element={<PlaceholderPage title="Reports" description="Analytics and reporting coming soon." />}
         />
         <Route
-          path="messages"
-          element={<PlaceholderPage title="Messages" description="Secure messaging between providers." />}
-        />
-        <Route
-          path="billing"
-          element={<PlaceholderPage title="Billing" description="Billing and insurance management." />}
-        />
-        <Route
           path="settings"
-          element={<PlaceholderPage title="Settings" description="Account and system preferences." />}
+          element={<Settings />}
         />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
