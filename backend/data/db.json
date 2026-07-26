@@ -127,8 +127,41 @@
       "hospitalId": "hosp-2"
     }
   ],
-  "visits": [],
-  "referrals": [],
+  "visits": [
+    {
+      "id": "076901e6-2fde-4a5a-8871-3b5f9e0bd5d2",
+      "patientId": "patient-2",
+      "patientName": "Jane Smith",
+      "doctorId": "user-admin",
+      "doctorName": "Dr. Robert Fox",
+      "clinicName": "Sympra Health Network",
+      "chiefComplaint": "none",
+      "diagnosis": "none",
+      "notes": "",
+      "referralNeeded": true,
+      "visitedAt": "2026-07-26T19:58:50.388Z"
+    }
+  ],
+  "referrals": [
+    {
+      "id": "e738a4d9-14df-46fe-9a76-30f255a30020",
+      "patientId": "patient-2",
+      "patientName": "Jane Smith",
+      "fromOrganization": "Sympra Health Network",
+      "toOrganization": "Metro Hospital",
+      "reason": "cardiology consultaion ",
+      "priority": "urgent",
+      "status": "pending",
+      "visitId": null,
+      "notes": "",
+      "createdBy": "user-admin",
+      "createdByName": "Dr. Robert Fox",
+      "createdAt": "2026-07-26T19:58:50.412Z",
+      "reviewedAt": null,
+      "reviewedBy": null,
+      "completedAt": null
+    }
+  ],
   "appointments": [],
   "labTests": [],
   "labResults": []
