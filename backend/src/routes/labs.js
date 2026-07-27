@@ -1,87 +1,91 @@
 const express = require('express');
-const { readDb, writeDb, uid } = require('../db');
+const LabTest = require('../models/LabTest');
+const LabResult = require('../models/LabResult');
+const Patient = require('../models/Patient');
 const { auth, requireRole } = require('../middleware/auth');
 
 const router = express.Router();
 
-router.get('/tests', auth, (req, res) => {
-  const db = readDb();
-  let tests = db.labTests;
+router.get('/tests', auth, async (req, res) => {
+  try {
+    let tests = await LabTest.find();
 
-  if (req.user.role === 'lab') {
-    tests = tests.filter((t) => t.labName === req.user.organization || !t.labName);
-  } else if (req.user.role === 'clinic' || req.user.role === 'hospital') {
-    tests = tests.filter((t) => t.requestedByOrg === req.user.organization);
+    if (req.user.role === 'lab') {
+      tests = tests.filter((t) => t.requestedBy === req.user.organization || !t.requestedBy);
+    } else if (req.user.role === 'clinic' || req.user.role === 'hospital') {
+      tests = tests.filter((t) => t.requestedBy === req.user.organization);
+    }
+
+    const enriched = await Promise.all(tests.map(async (test) => {
+      const results = await LabResult.find({ labTestId: test._id });
+      return { ...test.toObject(), results };
+    }));
+
+    res.json(enriched.sort((a, b) => new Date(b.requestedDate) - new Date(a.requestedDate)));
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch lab tests' });
   }
-
-  const enriched = tests.map((test) => {
-    const results = db.labResults.filter((r) => r.labTestId === test.id);
-    return { ...test, results };
-  });
-
-  res.json(enriched.sort((a, b) => new Date(b.requestedAt) - new Date(a.requestedAt)));
 });
 
-router.post('/tests', auth, requireRole('admin', 'clinic', 'hospital'), (req, res) => {
-  const { patientId, testType, referralId, labName, notes } = req.body;
+router.post('/tests', auth, requireRole('admin', 'clinic', 'hospital'), async (req, res) => {
+  const { patientId, testType, notes } = req.body;
   if (!patientId || !testType) {
     return res.status(400).json({ error: 'Patient and test type are required' });
   }
 
-  const db = readDb();
-  const patient = db.patients.find((p) => p.id === patientId);
-  if (!patient) {
-    return res.status(404).json({ error: 'Patient not found' });
+  try {
+    const patient = await Patient.findById(patientId);
+    if (!patient) {
+      return res.status(404).json({ error: 'Patient not found' });
+    }
+
+    const test = new LabTest({
+      patientId,
+      patientName: patient.name,
+      testType,
+      requestedBy: req.user.name,
+      status: 'pending',
+      notes: notes || ''
+    });
+
+    await test.save();
+    res.status(201).json(test);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to create lab test' });
   }
-
-  const test = {
-    id: uid(),
-    patientId,
-    patientName: patient.name,
-    referralId: referralId || null,
-    testType,
-    labName: labName || 'Metro Laboratory',
-    requestedBy: req.user.name,
-    requestedByOrg: req.user.organization,
-    status: 'pending',
-    notes: notes || '',
-    requestedAt: new Date().toISOString()
-  };
-
-  db.labTests.push(test);
-  writeDb(db);
-  res.status(201).json(test);
 });
 
-router.post('/results', auth, requireRole('admin', 'lab'), (req, res) => {
-  const { labTestId, findings, summary, fileName } = req.body;
-  if (!labTestId || !findings) {
-    return res.status(400).json({ error: 'Lab test ID and findings are required' });
+router.post('/results', auth, requireRole('admin', 'lab'), async (req, res) => {
+  const { labTestId, results, normalRange, status } = req.body;
+  if (!labTestId || !results) {
+    return res.status(400).json({ error: 'Lab test ID and results are required' });
   }
 
-  const db = readDb();
-  const test = db.labTests.find((t) => t.id === labTestId);
-  if (!test) {
-    return res.status(404).json({ error: 'Lab test not found' });
+  try {
+    const test = await LabTest.findById(labTestId);
+    if (!test) {
+      return res.status(404).json({ error: 'Lab test not found' });
+    }
+
+    const result = new LabResult({
+      labTestId,
+      patientId: test.patientId,
+      testType: test.testType,
+      results,
+      normalRange: normalRange || '',
+      status: status || 'normal',
+      completedBy: req.user.name
+    });
+
+    test.status = 'completed';
+    test.completedDate = new Date();
+    
+    await result.save();
+    await test.save();
+    res.status(201).json(result);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to upload lab result' });
   }
-
-  const result = {
-    id: uid(),
-    labTestId,
-    patientId: test.patientId,
-    patientName: test.patientName,
-    testType: test.testType,
-    findings,
-    summary: summary || '',
-    fileName: fileName || 'results.pdf',
-    uploadedBy: req.user.name,
-    uploadedAt: new Date().toISOString()
-  };
-
-  test.status = 'completed';
-  db.labResults.push(result);
-  writeDb(db);
-  res.status(201).json(result);
 });
 
 module.exports = router;

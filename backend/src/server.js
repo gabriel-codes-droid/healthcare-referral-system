@@ -1,7 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const { resetDb } = require('./db');
+const { connectDB, seedDB, resetDB } = require('./db');
 
 const authRoutes = require('./routes/auth');
 const patientRoutes = require('./routes/patients');
@@ -20,9 +20,14 @@ app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', service: 'Sympra Healthcare API' });
 });
 
-app.post('/api/seed', (_req, res) => {
-  resetDb();
+app.post('/api/seed', async (_req, res) => {
+  await seedDB();
   res.json({ message: 'Database seeded successfully' });
+});
+
+app.post('/api/reset', async (_req, res) => {
+  await resetDB();
+  res.json({ message: 'Database reset successfully' });
 });
 
 app.use('/api/auth', authRoutes);
@@ -37,6 +42,17 @@ app.use((err, _req, res, _next) => {
   res.status(500).json({ error: 'Internal server error' });
 });
 
-app.listen(PORT, () => {
-  console.log(`Sympra API running on http://localhost:${PORT}`);
-});
+async function startServer() {
+  try {
+    await connectDB();
+    await seedDB();
+    app.listen(PORT, () => {
+      console.log(`Sympra API running on http://localhost:${PORT}`);
+    });
+  } catch (error) {
+    console.error('Failed to start server:', error);
+    process.exit(1);
+  }
+}
+
+startServer();
