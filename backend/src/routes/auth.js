@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const User = require('../models/User');
 const { JWT_SECRET } = require('../middleware/auth');
+const { sendVerificationEmail } = require('../services/email');
 
 const router = express.Router();
 
@@ -14,7 +15,12 @@ router.post('/login', async (req, res) => {
 
   try {
     const user = await User.findOne({ email });
-    if (!user || user.password !== password) {
+    if (!user) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    const isMatch = await user.comparePassword(password);
+    if (!isMatch) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
@@ -105,8 +111,8 @@ router.post('/send-verification-code', async (req, res) => {
     user.verificationCodeExpires = expiresAt;
     await user.save();
 
-    // In production, send email here
-    console.log(`Verification code for ${email}: ${code}`);
+    // Send email with verification code
+    await sendVerificationEmail(email, code);
 
     res.json({ success: true, message: 'Verification code sent' });
   } catch (error) {
