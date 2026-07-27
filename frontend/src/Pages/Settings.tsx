@@ -1,15 +1,18 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { User, Lock, LogOut, Camera, Mail, Shield, Check, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { api } from '../services/api';
 import Modal from '../components/Modal';
 
 type PasswordResetStep = 'request' | 'verify' | 'reset' | 'success';
 
 export default function Settings() {
   const { user, logout } = useAuth();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [activeTab, setActiveTab] = useState<'profile' | 'security'>('profile');
   const [profileModal, setProfileModal] = useState(false);
   const [passwordModal, setPasswordModal] = useState(false);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   
   // Profile editing state
   const [profileName, setProfileName] = useState(user?.name || '');
@@ -27,15 +30,43 @@ export default function Settings() {
   const [passwordError, setPasswordError] = useState('');
   const [generatedCode, setGeneratedCode] = useState('');
 
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        alert('File size must be less than 5MB');
+        return;
+      }
+      if (!file.type.startsWith('image/')) {
+        alert('File must be an image');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setAvatarPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleProfileUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     setProfileSaving(true);
     setProfileError('');
     
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const updateData: { name?: string; email?: string; avatar?: string } = {
+        name: profileName,
+        email: profileEmail
+      };
+      
+      if (avatarPreview) {
+        updateData.avatar = avatarPreview;
+      }
+      
+      await api.updateProfile(updateData);
       setProfileModal(false);
+      setAvatarPreview(null);
     } catch (err) {
       setProfileError(err instanceof Error ? err.message : 'Failed to update profile');
     } finally {
@@ -49,12 +80,7 @@ export default function Settings() {
     setPasswordError('');
     
     try {
-      // Simulate sending email with verification code
-      const code = Math.random().toString(36).substring(2, 8).toUpperCase();
-      setGeneratedCode(code);
-      // In production, this would call an email API to send the code to the user's email
-      // For demo purposes, we'll show the code in the UI
-      alert(`DEMO: Your verification code is: ${code}\n\nIn production, this would be sent to your email.`);
+      await api.sendVerificationCode(resetEmail);
       setResetStep('verify');
     } catch (err) {
       setPasswordError(err instanceof Error ? err.message : 'Failed to send verification code');
@@ -69,9 +95,7 @@ export default function Settings() {
     setPasswordError('');
     
     try {
-      if (verificationCode !== generatedCode) {
-        throw new Error('Invalid verification code');
-      }
+      await api.verifyCode(resetEmail, verificationCode);
       setResetStep('reset');
     } catch (err) {
       setPasswordError(err instanceof Error ? err.message : 'Verification failed');
@@ -93,8 +117,7 @@ export default function Settings() {
         throw new Error('Password must be at least 8 characters');
       }
       
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await api.resetPassword(resetEmail, verificationCode, newPassword);
       setResetStep('success');
       
       // Reset form after 2 seconds
@@ -104,7 +127,7 @@ export default function Settings() {
         setVerificationCode('');
         setNewPassword('');
         setConfirmPassword('');
-        setGeneratedCode('');
+        setResetEmail('');
       }, 2000);
     } catch (err) {
       setPasswordError(err instanceof Error ? err.message : 'Failed to reset password');
@@ -148,12 +171,23 @@ export default function Settings() {
               <div className="profile-avatar-section">
                 <div className="profile-avatar-large">
                   <img
-                    src={user?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'User')}&background=0D8ABC&color=fff`}
+                    src={avatarPreview || user?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'User')}&background=0D8ABC&color=fff`}
                     alt={user?.name}
                   />
-                  <button type="button" className="avatar-edit-btn">
+                  <button 
+                    type="button" 
+                    className="avatar-edit-btn"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
                     <Camera size={16} />
                   </button>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleAvatarChange}
+                    style={{ display: 'none' }}
+                  />
                 </div>
                 <div className="profile-info">
                   <h2>{user?.name}</h2>

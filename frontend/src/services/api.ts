@@ -97,5 +97,29 @@ export const api = {
 
   getDoctors: () => request<import('../Types').Doctor[]>('/hospitals/doctors'),
 
-  getStats: () => request<import('../Types').DashboardStats>('/hospitals/stats')
+  getStats: () => request<import('../Types').DashboardStats>('/hospitals/stats'),
+
+  sendVerificationCode: (email: string) =>
+    request<{ success: boolean; message: string }>('/auth/send-verification-code', {
+      method: 'POST',
+      body: JSON.stringify({ email })
+    }),
+
+  verifyCode: (email: string, code: string) =>
+    request<{ success: boolean; message: string }>('/auth/verify-code', {
+      method: 'POST',
+      body: JSON.stringify({ email, code })
+    }),
+
+  resetPassword: (email: string, code: string, newPassword: string) =>
+    request<{ success: boolean; message: string }>('/auth/reset-password', {
+      method: 'POST',
+      body: JSON.stringify({ email, code, newPassword })
+    }),
+
+  updateProfile: (data: { name?: string; email?: string; avatar?: string }) =>
+    request<import('../Types').User>('/auth/profile', {
+      method: 'PATCH',
+      body: JSON.stringify(data)
+    })
 };
