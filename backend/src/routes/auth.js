@@ -2,6 +2,7 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const User = require('../models/User');
+const Patient = require('../models/Patient');
 const { JWT_SECRET } = require('../middleware/auth');
 const { sendVerificationEmail } = require('../services/email');
 
@@ -57,7 +58,7 @@ router.get('/me', async (req, res) => {
 });
 
 router.post('/signup', async (req, res) => {
-  const { name, email, password, role, organization } = req.body;
+  const { name, email, password, role, organization, phone, dateOfBirth, gender, address } = req.body;
   if (!name || !email || !password) {
     return res.status(400).json({ error: 'Name, email, and password are required' });
   }
@@ -78,6 +79,11 @@ router.post('/signup', async (req, res) => {
     });
 
     await newUser.save();
+    if (newUser.role === 'patient') {
+      const patient = await Patient.create({ name, email, phone: phone || '', dateOfBirth: dateOfBirth || undefined, gender: gender || '', address: address || '', userId: newUser._id, avatar: newUser.avatar });
+      newUser.patientId = patient._id;
+      await newUser.save();
+    }
 
     const token = jwt.sign(
       { id: newUser._id, email: newUser.email, role: newUser.role, name: newUser.name, organization: newUser.organization },

@@ -3,6 +3,7 @@ const LabTest = require('../models/LabTest');
 const LabResult = require('../models/LabResult');
 const Patient = require('../models/Patient');
 const { auth, requireRole } = require('../middleware/auth');
+const { audit } = require('../services/audit');
 
 const router = express.Router();
 
@@ -86,6 +87,21 @@ router.post('/results', auth, requireRole('admin', 'lab'), async (req, res) => {
   } catch (error) {
     res.status(500).json({ error: 'Failed to upload lab result' });
   }
+});
+
+router.patch('/tests/:id', auth, requireRole('admin', 'lab'), async (req, res) => {
+  const test = await LabTest.findById(req.params.id);
+  if (!test) return res.status(404).json({ error: 'Lab test not found' });
+  if (req.user.role === 'lab' && test.requestedBy !== req.user.organization && test.requestedBy !== req.user.name) return res.status(403).json({ error: 'This test is not assigned to your laboratory' });
+  if (req.body.status) test.status = req.body.status;
+  if (req.body.notes !== undefined) test.notes = req.body.notes;
+  await test.save(); audit(req, 'lab_test.updated', 'LabTest', test._id, test.status); res.json(test);
+});
+
+router.delete('/tests/:id', auth, requireRole('admin'), async (req, res) => {
+  const test = await LabTest.findByIdAndDelete(req.params.id);
+  if (!test) return res.status(404).json({ error: 'Lab test not found' });
+  await LabResult.deleteMany({ labTestId: test._id }); audit(req, 'lab_test.deleted', 'LabTest', test._id); res.status(204).end();
 });
 
 module.exports = router;

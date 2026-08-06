@@ -9,6 +9,8 @@ const referralRoutes = require('./routes/referrals');
 const appointmentRoutes = require('./routes/appointments');
 const labRoutes = require('./routes/labs');
 const hospitalRoutes = require('./routes/hospitals');
+const messageRoutes = require('./routes/messages');
+const privacyRoutes = require('./routes/privacy');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -30,7 +32,17 @@ app.use(cors({
   credentials: true
 }));
 
-app.use(express.json());
+app.use(express.json({ limit: '4mb' }));
+app.disable('x-powered-by');
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('Referrer-Policy', 'no-referrer');
+  if (req.secure || req.headers['x-forwarded-proto'] === 'https') {
+    res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  }
+  next();
+});
 
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', service: 'Sympra Healthcare API' });
@@ -52,6 +64,8 @@ app.use('/api/referrals', referralRoutes);
 app.use('/api/appointments', appointmentRoutes);
 app.use('/api/labs', labRoutes);
 app.use('/api/hospitals', hospitalRoutes);
+app.use('/api/messages', messageRoutes);
+app.use('/api/privacy', privacyRoutes);
 
 app.use((err, _req, res, _next) => {
   console.error(err);

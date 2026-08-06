@@ -2,6 +2,7 @@ import { Bell, CalendarDays, ChevronDown, LogOut, Search, Sun, Moon, X, Menu } f
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import { useLanguage } from '../context/LanguageContext';
 
 type Props = {
   onMenuToggle?: () => void;
@@ -10,6 +11,7 @@ type Props = {
 export default function Topbar({ onMenuToggle }: Props) {
   const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
+  const { language, setLanguage } = useLanguage();
   const [showNotifications, setShowNotifications] = useState(false);
   
   const today = new Date().toLocaleDateString('en-US', {
@@ -44,6 +46,7 @@ export default function Topbar({ onMenuToggle }: Props) {
       </label>
 
       <div className="topbar-actions">
+        <select aria-label="Language" value={language} onChange={e => setLanguage(e.target.value as 'en'|'rw'|'fr')}><option value="en">EN</option><option value="rw">RW</option><option value="fr">FR</option></select>
         <button type="button" className="date-button">
           <CalendarDays size={17} />
           {today}

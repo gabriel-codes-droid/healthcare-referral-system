@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Plus, Upload, ArrowLeft } from 'lucide-react';
+import { Plus, Upload, ArrowLeft, Play, Trash2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import Modal from '../components/Modal';
 import { useAuth } from '../context/AuthContext';
@@ -134,9 +134,11 @@ export default function Laboratories() {
                           <Upload size={14} /> Upload Results
                         </button>
                       )}
+                      {canUpload && test.status === 'pending' && <button type="button" className="btn-secondary btn-sm" onClick={async () => { await api.updateLabTest(test.id, { status: 'in-progress' }); load(); }}><Play size={14}/> Start</button>}
                       {test.results && test.results.length > 0 && (
                         <span className="result-badge">Results uploaded</span>
                       )}
+                      {user?.role === 'admin' && <button type="button" className="btn-danger btn-sm" onClick={async () => { if (window.confirm('Delete this test and its results?')) { await api.deleteLabTest(test.id); load(); } }}><Trash2 size={14}/></button>}
                     </td>
                   </tr>
                 ))

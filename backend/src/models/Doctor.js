@@ -5,7 +5,8 @@ const doctorSchema = new mongoose.Schema({
   specialty: { type: String, required: true },
   rating: { type: Number, default: 0 },
   avatar: { type: String },
-  hospitalId: { type: mongoose.Schema.Types.ObjectId, ref: 'Hospital' }
+  hospitalId: { type: mongoose.Schema.Types.ObjectId, ref: 'Hospital' },
+  availability: [{ day: String, slots: [String] }]
 });
 
 module.exports = mongoose.model('Doctor', doctorSchema);

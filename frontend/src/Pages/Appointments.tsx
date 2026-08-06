@@ -4,20 +4,23 @@ import { Link } from 'react-router-dom';
 import Modal from '../components/Modal';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
-import type { Appointment, Patient } from '../Types';
+import type { Appointment, Doctor, Patient } from '../Types';
 
 export default function Appointments() {
   const { user } = useAuth();
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [patients, setPatients] = useState<Patient[]>([]);
+  const [doctors, setDoctors] = useState<Doctor[]>([]);
+  const [availableSlots, setAvailableSlots] = useState<string[]>([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
 
   const load = async () => {
-    const [a, p] = await Promise.all([api.getAppointments(), api.getPatients()]);
+    const [a, p, d] = await Promise.all([api.getAppointments(), api.getPatients(), api.getDoctors()]);
     setAppointments(a);
     setPatients(p);
+    setDoctors(d);
   };
 
   useEffect(() => {
@@ -33,6 +36,7 @@ export default function Appointments() {
       await api.createAppointment({
         patientId: form.get('patientId'),
         doctorName: form.get('doctorName'),
+        doctorId: form.get('doctorId'),
         hospitalName: form.get('hospitalName'),
         type: form.get('type'),
         date: form.get('date'),
@@ -46,6 +50,7 @@ export default function Appointments() {
       setSaving(false);
     }
   };
+  const calendarDays = Array.from({ length: 7 }, (_, index) => { const date = new Date(); date.setHours(0, 0, 0, 0); date.setDate(date.getDate() + index); return date; });
 
   return (
     <>
@@ -103,6 +108,11 @@ export default function Appointments() {
         </div>
       </section>
 
+      <section className="panel" style={{ marginTop: '1.5rem' }}>
+        <div className="panel-header"><h2>7-day calendar</h2></div>
+        <div className="table-wrap"><table><thead><tr>{calendarDays.map(day => <th key={day.toISOString()}>{day.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}</th>)}</tr></thead><tbody><tr>{calendarDays.map(day => { const key = day.toISOString().slice(0, 10); const daily = appointments.filter(a => new Date(a.date).toISOString().slice(0, 10) === key); return <td key={key} style={{ verticalAlign: 'top', minWidth: '130px' }}>{daily.length ? daily.map(a => <div className="result-badge" key={a.id}>{a.time}<br/>{a.patientName}<br/>{a.doctorName}</div>) : <small className="empty-cell">Available</small>}</td>; })}</tr></tbody></table></div>
+      </section>
+
       <Modal title="Schedule Appointment" open={modalOpen} onClose={() => setModalOpen(false)}>
         <form className="form-grid" onSubmit={handleCreate}>
           <label>
@@ -118,8 +128,12 @@ export default function Appointments() {
           </label>
           <label>
             Doctor
-            <input name="doctorName" defaultValue={user?.name} />
+            <select name="doctorId" onChange={(e) => { const date = (e.currentTarget.form?.elements.namedItem('date') as HTMLInputElement)?.value; if (e.target.value && date) api.getAvailability(e.target.value, date).then(x => setAvailableSlots(x.slots)); }}>
+              <option value="">{user?.name || 'Select doctor'}</option>
+              {doctors.map(d => <option key={d.id} value={d.id}>{d.name} — {d.specialty}</option>)}
+            </select>
           </label>
+          <input type="hidden" name="doctorName" value={user?.name || ''} />
           <label>
             Hospital
             <input name="hospitalName" defaultValue={user?.organization} />
@@ -134,8 +148,9 @@ export default function Appointments() {
           </label>
           <label>
             Time *
-            <input name="time" placeholder="10:00 AM" required />
+            <input name="time" type="time" required />
           </label>
+          {availableSlots.length > 0 && <p className="form-hint full-width">Available: {availableSlots.join(', ')}</p>}
           {error && <p className="form-error full-width">{error}</p>}
           <button type="submit" className="btn-primary full-width" disabled={saving}>
             Schedule

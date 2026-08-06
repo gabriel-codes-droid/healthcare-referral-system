@@ -111,6 +111,7 @@ export default function Patients() {
                     >
                       <Stethoscope size={14} /> Examine
                     </button>
+                    <Link to={`/patients/${patient.id}/records`} className="btn-secondary btn-sm">Record</Link>
                   </td>
                 </tr>
               ))}

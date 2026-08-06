@@ -17,6 +17,10 @@ export interface Patient {
   address: string;
   avatar: string;
   registeredAt: string;
+  medicalHistory?: MedicalHistory[];
+  allergies?: Allergy[];
+  prescriptions?: Prescription[];
+  attachments?: Attachment[];
 }
 
 export interface Visit {
@@ -26,12 +30,19 @@ export interface Visit {
   doctorId: string;
   doctorName: string;
   clinicName: string;
+  clinicianName?: string;
   chiefComplaint: string;
   diagnosis: string;
   notes: string;
   referralNeeded: boolean;
   visitedAt: string;
 }
+export interface MedicalHistory { condition: string; diagnosedOn?: string; notes?: string }
+export interface Allergy { substance: string; reaction?: string; severity?: string }
+export interface Prescription { medication: string; dosage?: string; instructions?: string; prescribedOn?: string }
+export interface Attachment { name: string; url: string; mimeType?: string; uploadedAt?: string }
+export interface Message { id: string; senderName: string; body: string; createdAt: string }
+export interface AuditLog { id: string; actorName: string; action: string; entityType: string; entityId: string; details: string; createdAt: string }
 
 export interface Referral {
   id: string;

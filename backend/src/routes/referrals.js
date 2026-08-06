@@ -2,7 +2,9 @@ const express = require('express');
 const Referral = require('../models/Referral');
 const Patient = require('../models/Patient');
 const Appointment = require('../models/Appointment');
+const Doctor = require('../models/Doctor');
 const { auth, requireRole } = require('../middleware/auth');
+const { audit } = require('../services/audit');
 
 const router = express.Router();
 
@@ -18,7 +20,10 @@ router.get('/', auth, async (req, res) => {
   try {
     let referrals = await Referral.find();
 
-    if (req.user.role === 'clinic') {
+    if (req.user.role === 'patient') {
+      const patient = await Patient.findOne({ email: req.user.email });
+      referrals = patient ? referrals.filter((r) => r.patientId.toString() === patient._id.toString()) : [];
+    } else if (req.user.role === 'clinic') {
       referrals = referrals.filter((r) => r.fromOrganization === req.user.organization);
     } else if (req.user.role === 'hospital') {
       referrals = referrals.filter((r) => r.toOrganization === req.user.organization);
@@ -44,7 +49,7 @@ router.get('/:id', auth, async (req, res) => {
 });
 
 router.post('/', auth, requireRole('admin', 'clinic', 'hospital'), async (req, res) => {
-  const { patientId, toOrganization, reason, priority, notes } = req.body;
+  const { patientId, toOrganization, assignedDoctorId, reason, priority, notes } = req.body;
   if (!patientId || !toOrganization || !reason) {
     return res.status(400).json({ error: 'Patient, destination hospital, and reason are required' });
   }
@@ -55,18 +60,23 @@ router.post('/', auth, requireRole('admin', 'clinic', 'hospital'), async (req, r
       return res.status(404).json({ error: 'Patient not found' });
     }
 
+    const doctor = assignedDoctorId ? await Doctor.findById(assignedDoctorId) : null;
+    if (assignedDoctorId && !doctor) return res.status(404).json({ error: 'Specialist not found' });
     const referral = new Referral({
       patientId,
       patientName: patient.name,
       patientAvatar: patient.avatar,
       fromOrganization: req.user.organization,
       toOrganization,
+      assignedDoctorId: doctor?._id,
+      assignedDoctorName: doctor?.name || '',
       reason,
       priority: priority || 'normal',
       notes: notes || ''
     });
 
     await referral.save();
+    audit(req, 'referral.created', 'Referral', referral._id, `To ${toOrganization}`);
     res.status(201).json(await formatReferral(referral));
   } catch (error) {
     res.status(500).json({ error: 'Failed to create referral' });
@@ -74,7 +84,7 @@ router.post('/', auth, requireRole('admin', 'clinic', 'hospital'), async (req, r
 });
 
 router.patch('/:id/accept', auth, requireRole('admin', 'hospital'), async (req, res) => {
-  const { appointmentDate, appointmentTime, assignedDoctor } = req.body;
+  const { appointmentDate, appointmentTime, assignedDoctor, assignedDoctorId } = req.body;
 
   try {
     const referral = await Referral.findById(req.params.id);
@@ -89,13 +99,16 @@ router.patch('/:id/accept', auth, requireRole('admin', 'hospital'), async (req, 
       return res.status(403).json({ error: 'This referral is not for your hospital' });
     }
 
+    const doctor = assignedDoctorId ? await Doctor.findById(assignedDoctorId) : null;
     referral.status = 'accepted';
+    if (doctor) { referral.assignedDoctorId = doctor._id; referral.assignedDoctorName = doctor.name; }
     referral.updatedAt = new Date();
 
     const appointment = new Appointment({
       patientId: referral.patientId,
       patientName: referral.patientName,
-      doctorName: assignedDoctor || req.user.name,
+      doctorId: doctor?._id || referral.assignedDoctorId,
+      doctorName: assignedDoctor || doctor?.name || referral.assignedDoctorName || req.user.name,
       hospitalName: referral.toOrganization,
       type: referral.reason,
       date: appointmentDate || new Date().toISOString().split('T')[0],
@@ -104,7 +117,9 @@ router.patch('/:id/accept', auth, requireRole('admin', 'hospital'), async (req, 
     });
 
     await appointment.save();
+    referral.appointmentId = appointment._id;
     await referral.save();
+    audit(req, 'referral.accepted', 'Referral', referral._id);
 
     res.json({
       referral: await formatReferral(referral),
@@ -135,6 +150,7 @@ router.patch('/:id/reject', auth, requireRole('admin', 'hospital'), async (req, 
     referral.rejectionReason = rejectionReason || 'Not accepted at this time';
     referral.updatedAt = new Date();
     await referral.save();
+    audit(req, 'referral.rejected', 'Referral', referral._id);
 
     res.json(await formatReferral(referral));
   } catch (error) {
@@ -159,6 +175,7 @@ router.patch('/:id/complete', auth, requireRole('admin', 'hospital', 'clinic'), 
     referral.treatmentNotes = treatmentNotes || '';
     referral.updatedAt = new Date();
     await referral.save();
+    audit(req, 'referral.completed', 'Referral', referral._id);
 
     res.json(await formatReferral(referral));
   } catch (error) {

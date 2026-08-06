@@ -4,13 +4,14 @@ import { Link } from 'react-router-dom';
 import Modal from '../components/Modal';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
-import type { Hospital, Patient, Referral } from '../Types';
+import type { Doctor, Hospital, Patient, Referral } from '../Types';
 
 export default function Referrals() {
   const { user } = useAuth();
   const [referrals, setReferrals] = useState<Referral[]>([]);
   const [patients, setPatients] = useState<Patient[]>([]);
   const [hospitals, setHospitals] = useState<Hospital[]>([]);
+  const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [acceptModal, setAcceptModal] = useState<Referral | null>(null);
   const [completeModal, setCompleteModal] = useState<Referral | null>(null);
@@ -18,10 +19,11 @@ export default function Referrals() {
   const [saving, setSaving] = useState(false);
 
   const load = async () => {
-    const [r, p, h] = await Promise.all([api.getReferrals(), api.getPatients(), api.getHospitals()]);
+    const [r, p, h, d] = await Promise.all([api.getReferrals(), api.getPatients(), api.getHospitals(), api.getDoctors()]);
     setReferrals(r);
     setPatients(p);
     setHospitals(h);
+    setDoctors(d);
   };
 
   useEffect(() => {
@@ -46,6 +48,7 @@ export default function Referrals() {
       await api.createReferral({
         patientId,
         toOrganization: form.get('toOrganization'),
+        assignedDoctorId: form.get('assignedDoctorId'),
         reason: form.get('reason'),
         priority: form.get('priority'),
         notes: form.get('notes')
@@ -233,6 +236,13 @@ export default function Referrals() {
           <label>
             Reason *
             <input name="reason" required />
+          </label>
+          <label>
+            Specialist
+            <select name="assignedDoctorId">
+              <option value="">Any appropriate specialist</option>
+              {doctors.map((doctor) => <option key={doctor.id} value={doctor.id}>{doctor.name} — {doctor.specialty}</option>)}
+            </select>
           </label>
           <label>
             Priority

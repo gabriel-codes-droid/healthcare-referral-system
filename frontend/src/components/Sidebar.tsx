@@ -5,25 +5,32 @@ import {
   CalendarDays,
   ClipboardList,
   FileBarChart,
+  ShieldCheck,
+  RefreshCw,
+  MessageCircle,
   FlaskConical,
   Home,
   Settings,
   Stethoscope,
-  Users,
-  X
+  Users
 } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
+import { useLanguage } from '../context/LanguageContext';
+import { useAuth } from '../context/AuthContext';
 
 const navItems = [
-  { label: 'Dashboard', icon: Home, path: '/' },
-  { label: 'Patients', icon: Users, path: '/patients' },
-  { label: 'Appointments', icon: CalendarDays, path: '/appointments' },
-  { label: 'Referrals', icon: ClipboardList, path: '/referrals' },
-  { label: 'Doctors', icon: Stethoscope, path: '/doctors' },
-  { label: 'Hospitals', icon: Building2, path: '/hospitals' },
-  { label: 'Laboratories', icon: FlaskConical, path: '/laboratories' },
+  { label: 'Dashboard', key: 'dashboard', icon: Home, path: '/' },
+  { label: 'Patients', key: 'patients', icon: Users, path: '/patients' },
+  { label: 'Appointments', key: 'appointments', icon: CalendarDays, path: '/appointments' },
+  { label: 'Referrals', key: 'referrals', icon: ClipboardList, path: '/referrals' },
+  { label: 'Doctors', key: 'doctors', icon: Stethoscope, path: '/doctors' },
+  { label: 'Hospitals', key: 'hospitals', icon: Building2, path: '/hospitals' },
+  { label: 'Laboratories', key: 'laboratories', icon: FlaskConical, path: '/laboratories' },
+  { label: 'Consultations', key: 'consultations', icon: MessageCircle, path: '/messages' },
   { label: 'Reports', icon: FileBarChart, path: '/reports' },
-  { label: 'Settings', icon: Settings, path: '/settings' }
+  { label: 'Settings', key: 'settings', icon: Settings, path: '/settings' },
+  { label: 'Offline sync', key: 'settings', icon: RefreshCw, path: '/sync' },
+  { label: 'Compliance', key: 'settings', icon: ShieldCheck, path: '/compliance' }
 ];
 
 type Props = {
@@ -33,6 +40,16 @@ type Props = {
 
 export default function Sidebar({ isOpen = false, onClose }: Props) {
   const { theme, toggleTheme } = useTheme();
+  const { t } = useLanguage();
+  const { user } = useAuth();
+  const visibleNav = navItems.filter((item) => {
+    const role = user?.role;
+    if (role === 'patient') return ['/', '/appointments', '/referrals', '/messages', '/settings', '/sync'].includes(item.path);
+    if (role === 'lab') return ['/', '/laboratories', '/messages', '/settings', '/sync'].includes(item.path);
+    if (role === 'clinic') return item.path !== '/compliance';
+    if (role === 'hospital') return item.path !== '/compliance';
+    return true;
+  });
 
   return (
     <>
@@ -45,7 +62,7 @@ export default function Sidebar({ isOpen = false, onClose }: Props) {
         </div>
 
         <nav className="sidebar-nav" aria-label="Primary navigation">
-          {navItems.map((item) => {
+          {visibleNav.map((item) => {
             const Icon = item.icon;
             return (
               <NavLink
@@ -58,7 +75,7 @@ export default function Sidebar({ isOpen = false, onClose }: Props) {
                 }}
               >
                 <Icon size={18} />
-                <span>{item.label}</span>
+                <span>{t(item.key as Parameters<typeof t>[0])}</span>
               </NavLink>
             );
           })}

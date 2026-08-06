@@ -1,6 +1,7 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
+import { LanguageProvider } from './context/LanguageContext';
 import Layout from './components/Layout';
 import Login from './Pages/Login';
 import Register from './Pages/Register';
@@ -13,6 +14,10 @@ import Doctors from './Pages/Doctors';
 import Hospitals from './Pages/Hospitals';
 import Settings from './Pages/Settings';
 import PlaceholderPage from './Pages/PlaceholderPage';
+import MedicalRecords from './Pages/MedicalRecords';
+import Messages from './Pages/Messages';
+import Compliance from './Pages/Compliance';
+import SyncCenter from './Pages/SyncCenter';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -55,11 +60,15 @@ function AppRoutes() {
       >
         <Route index element={<Dashboard />} />
         <Route path="patients" element={<Patients />} />
+        <Route path="patients/:id/records" element={<MedicalRecords />} />
         <Route path="appointments" element={<Appointments />} />
         <Route path="referrals" element={<Referrals />} />
         <Route path="doctors" element={<Doctors />} />
         <Route path="hospitals" element={<Hospitals />} />
         <Route path="laboratories" element={<Laboratories />} />
+        <Route path="messages" element={<Messages />} />
+        <Route path="compliance" element={<Compliance />} />
+        <Route path="sync" element={<SyncCenter />} />
         <Route
           path="reports"
           element={<PlaceholderPage title="Reports" description="Analytics and reporting coming soon." />}
@@ -77,11 +86,11 @@ function AppRoutes() {
 export default function App() {
   return (
     <ThemeProvider>
-      <AuthProvider>
+      <LanguageProvider><AuthProvider>
         <BrowserRouter>
           <AppRoutes />
         </BrowserRouter>
-      </AuthProvider>
+      </AuthProvider></LanguageProvider>
     </ThemeProvider>
   );
 }

@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { User, Lock, LogOut, Camera, Mail, Shield, Check, X } from 'lucide-react';
+import { User, Lock, LogOut, Camera, Mail, Shield, Check } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
 import Modal from '../components/Modal';
@@ -28,7 +28,6 @@ export default function Settings() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [passwordSaving, setPasswordSaving] = useState(false);
   const [passwordError, setPasswordError] = useState('');
-  const [generatedCode, setGeneratedCode] = useState('');
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -291,7 +290,6 @@ export default function Settings() {
           setVerificationCode('');
           setNewPassword('');
           setConfirmPassword('');
-          setGeneratedCode('');
         }}
       >
         {resetStep === 'request' && (

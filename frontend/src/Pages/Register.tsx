@@ -13,6 +13,7 @@ export default function Register() {
   const [password, setPassword] = useState('');
   const [role, setRole] = useState('clinic');
   const [organization, setOrganization] = useState('');
+  const [phone, setPhone] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -86,8 +87,10 @@ export default function Register() {
               <option value="hospital">Hospital</option>
               <option value="lab">Laboratory</option>
               <option value="admin">Admin</option>
+              <option value="patient">Patient</option>
             </select>
           </label>
+          {role === 'patient' && <label>Phone<input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+250..." /></label>}
           <label>
             Organization
             <input

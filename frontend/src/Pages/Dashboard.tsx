@@ -140,19 +140,28 @@ export default function Dashboard() {
 
   const hospitalOptions = hospitals.filter((h) => h.type === 'hospital');
   const labOptions = hospitals.filter((h) => h.type === 'laboratory');
+  const role = user?.role || 'clinic';
+  const dashboardMeta = {
+    admin: { title: 'Network operations', description: 'Monitor network activity, facility access, and privacy controls.', primary: 'Registered patients', secondary: 'Network referrals' },
+    clinic: { title: 'Clinic care workspace', description: 'Register patients, document care, and coordinate onward referrals.', primary: 'Your patients', secondary: 'Referrals sent' },
+    hospital: { title: 'Receiving hospital desk', description: 'Review incoming referrals, assign specialists, and coordinate appointments.', primary: 'Patients receiving care', secondary: 'Incoming referrals' },
+    lab: { title: 'Laboratory worklist', description: 'Process assigned tests and publish clinical results.', primary: 'Assigned patients', secondary: 'Active referrals' },
+    patient: { title: 'My care portal', description: 'Review your appointments, referrals, records, and care-team conversations.', primary: 'My record', secondary: 'My referrals' }
+  }[role as 'admin' | 'clinic' | 'hospital' | 'lab' | 'patient'];
+  const canCreateCare = ['admin', 'clinic', 'hospital'].includes(role);
 
   return (
     <>
       <section className="welcome-row">
         <div>
-          <h1>Welcome back, {user?.name?.split(' ')[1] || user?.name}!</h1>
-          <p>Manage referrals, appointments, and patient care from one dashboard.</p>
+          <h1>{dashboardMeta.title}</h1>
+          <p>Welcome back, {user?.name?.split(' ')[1] || user?.name}. {dashboardMeta.description}</p>
         </div>
       </section>
 
       <section className="stats-grid">
         <StatCard
-          title="Total Patients"
+          title={dashboardMeta.primary}
           value={String(stats?.totalPatients ?? 0)}
           change="+12%"
           tone="blue"
@@ -160,7 +169,7 @@ export default function Dashboard() {
           points={[12, 18, 14, 22, 19, 26, 24]}
         />
         <StatCard
-          title="Total Referrals"
+          title={dashboardMeta.secondary}
           value={String(stats?.totalReferrals ?? 0)}
           change="+8%"
           tone="teal"
@@ -194,12 +203,12 @@ export default function Dashboard() {
           />
         </div>
         <aside className="dashboard-side">
-          <QuickActions
+          {canCreateCare && <QuickActions
             onNewReferral={() => setModal('referral')}
             onNewAppointment={() => setModal('appointment')}
             onAddPatient={() => setModal('patient')}
             onLabRequest={() => setModal('lab')}
-          />
+          />}
           <AppointmentList appointments={stats?.upcomingAppointments ?? []} />
           <TopDoctors doctors={stats?.topDoctors ?? []} />
         </aside>
