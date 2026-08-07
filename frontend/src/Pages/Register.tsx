@@ -1,4 +1,4 @@
-import { Activity, Loader2, ArrowLeft } from 'lucide-react';
+import { Activity, Eye, EyeOff, Loader2, ArrowLeft } from 'lucide-react';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -11,6 +11,7 @@ export default function Register() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [role, setRole] = useState('clinic');
   const [organization, setOrganization] = useState('');
   const [phone, setPhone] = useState('');
@@ -22,7 +23,7 @@ export default function Register() {
     setError('');
     setLoading(true);
     try {
-      await signup(name, email, password, role, organization);
+      await signup(name, email, password, role, organization, phone);
       navigate('/');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Registration failed');
@@ -72,13 +73,14 @@ export default function Register() {
           <label>
             Password
             <input
-              type="password"
+              type={showPassword ? 'text' : 'password'}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
               placeholder="••••••••"
               minLength={6}
             />
+            <button type="button" className="btn-secondary btn-sm" onClick={() => setShowPassword(!showPassword)} aria-label={showPassword ? 'Hide password' : 'Show password'}>{showPassword ? <EyeOff size={15} /> : <Eye size={15} />}</button>
           </label>
           <label>
             Role
@@ -97,8 +99,8 @@ export default function Register() {
               type="text"
               value={organization}
               onChange={(e) => setOrganization(e.target.value)}
-              required
-              placeholder="City Clinic"
+              required={role !== 'patient'}
+              placeholder={role === 'patient' ? 'Optional' : 'City Clinic'}
             />
           </label>
           {error && <p className="form-error">{error}</p>}

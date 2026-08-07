@@ -94,7 +94,10 @@ router.post('/signup', async (req, res) => {
     const { password: _, ...safeUser } = newUser.toObject();
     res.status(201).json({ token, user: safeUser });
   } catch (error) {
-    res.status(500).json({ error: 'Signup failed' });
+    console.error('Signup failed:', error);
+    if (error.code === 11000) return res.status(409).json({ error: 'Email already registered' });
+    if (error.name === 'ValidationError') return res.status(400).json({ error: error.message });
+    res.status(500).json({ error: 'Signup failed. Check the server logs for details.' });
   }
 });
 

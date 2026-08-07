@@ -1,4 +1,4 @@
-import { Activity, Loader2 } from 'lucide-react';
+import { Activity, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -16,6 +16,7 @@ export default function Login() {
   const { theme, toggleTheme } = useTheme();
   const [email, setEmail] = useState('admin@sympra.com');
   const [password, setPassword] = useState('admin123');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -66,12 +67,7 @@ export default function Login() {
           </label>
           <label>
             Password
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
+            <span className="password-input"><input type={showPassword ? 'text' : 'password'} value={password} onChange={(e) => setPassword(e.target.value)} required /><button type="button" className="password-toggle" onClick={() => setShowPassword(!showPassword)} aria-label={showPassword ? 'Hide password' : 'Show password'}>{showPassword ? <EyeOff size={17} /> : <Eye size={17} />}</button></span>
           </label>
           {error && <p className="form-error">{error}</p>}
           <button type="submit" className="btn-primary" disabled={loading}>

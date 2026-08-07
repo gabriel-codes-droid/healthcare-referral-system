@@ -60,10 +60,10 @@ export const api = {
       body: JSON.stringify({ email, password })
     }),
 
-  signup: (name: string, email: string, password: string, role?: string, organization?: string) =>
+  signup: (name: string, email: string, password: string, role?: string, organization?: string, phone?: string) =>
     request<{ token: string; user: import('../Types').User }>('/auth/signup', {
       method: 'POST',
-      body: JSON.stringify({ name, email, password, role, organization })
+      body: JSON.stringify({ name, email, password, role, organization, phone })
     }),
 
   getMe: () => request<import('../Types').User>('/auth/me'),

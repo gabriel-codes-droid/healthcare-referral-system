@@ -6,7 +6,7 @@ type AuthContextType = {
   user: User | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  signup: (name: string, email: string, password: string, role?: string, organization?: string) => Promise<void>;
+  signup: (name: string, email: string, password: string, role?: string, organization?: string, phone?: string) => Promise<void>;
   logout: () => void;
 };
 
@@ -36,8 +36,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(loggedInUser);
   };
 
-  const signup = async (name: string, email: string, password: string, role?: string, organization?: string) => {
-    const { token, user: registeredUser } = await api.signup(name, email, password, role, organization);
+  const signup = async (name: string, email: string, password: string, role?: string, organization?: string, phone?: string) => {
+    const { token, user: registeredUser } = await api.signup(name, email, password, role, organization, phone);
     localStorage.setItem('sympra_token', token);
     setUser(registeredUser);
   };

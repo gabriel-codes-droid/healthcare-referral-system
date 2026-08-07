@@ -1,6 +1,13 @@
 const mongoose = require('mongoose');
+const dns = require('node:dns');
 
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/healthcare-referral-system';
+
+// Some ISP/network resolvers refuse MongoDB Atlas SRV queries. Set this in
+// .env (for example 8.8.8.8 or 1.1.1.1) to use a known DNS resolver instead.
+if (process.env.MONGODB_DNS_SERVER) {
+  dns.setServers(process.env.MONGODB_DNS_SERVER.split(',').map((server) => server.trim()));
+}
 
 async function connectDB() {
   try {

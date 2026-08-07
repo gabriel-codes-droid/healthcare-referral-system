@@ -1481,6 +1481,10 @@ tbody tr:hover { background: var(--primary-soft); }
   color: var(--text-muted);
 }
 
+.password-input { position: relative; display: block; }
+.password-input input { width: 100%; padding-right: 2.75rem; }
+.password-toggle { position: absolute; right: 0.6rem; top: 50%; transform: translateY(-50%); border: 0; background: transparent; color: var(--text-muted); cursor: pointer; display: grid; place-items: center; padding: 0.2rem; }
+
 /* Billing */
 .billing-container {
   display: flex;
