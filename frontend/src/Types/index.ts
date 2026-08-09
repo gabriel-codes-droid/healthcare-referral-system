@@ -16,11 +16,71 @@ export interface Patient {
   gender: string;
   address: string;
   avatar: string;
+  allergies: string[];
   registeredAt: string;
-  medicalHistory?: MedicalHistory[];
-  allergies?: Allergy[];
-  prescriptions?: Prescription[];
-  attachments?: Attachment[];
+}
+
+export interface Prescription {
+  id: string;
+  patientId: string;
+  patientName: string;
+  visitId: string | null;
+  medication: string;
+  dosage: string;
+  frequency: string;
+  duration: string;
+  notes: string;
+  prescribedBy: string;
+  prescribedByOrg: string;
+  prescribedAt: string;
+}
+
+export interface Invoice {
+  id: string;
+  patientId: string;
+  patientName: string;
+  serviceType: string;
+  description: string;
+  amount: number;
+  currency: string;
+  payerType: 'self-pay' | 'insurance';
+  insuranceProvider: string;
+  insurancePolicyNumber: string;
+  status: 'pending' | 'paid' | 'overdue' | 'cancelled';
+  issuedBy: string;
+  issuedByOrg: string;
+  issuedAt: string;
+  paidAt: string | null;
+}
+export interface AuditLogEntry {
+  id: string;
+  userName: string;
+  userOrg: string;
+  userRole: string;
+  action: string;
+  targetType: string;
+  targetId: string;
+  details: string;
+  createdAt: string;
+}
+export interface Message {
+  id: string;
+  referralId: string;
+  senderName: string;
+  senderOrg: string;
+  text: string;
+  createdAt: string;
+}
+export interface Attachment {
+  id: string;
+  patientId: string;
+  patientName: string;
+  fileName: string;
+  mimeType: string;
+  sizeBytes: number;
+  data?: string;
+  uploadedBy: string;
+  uploadedAt: string;
 }
 
 export interface Visit {
@@ -30,19 +90,12 @@ export interface Visit {
   doctorId: string;
   doctorName: string;
   clinicName: string;
-  clinicianName?: string;
   chiefComplaint: string;
   diagnosis: string;
   notes: string;
   referralNeeded: boolean;
   visitedAt: string;
 }
-export interface MedicalHistory { condition: string; diagnosedOn?: string; notes?: string }
-export interface Allergy { substance: string; reaction?: string; severity?: string }
-export interface Prescription { medication: string; dosage?: string; instructions?: string; prescribedOn?: string }
-export interface Attachment { name: string; url: string; mimeType?: string; uploadedAt?: string }
-export interface Message { id: string; senderName: string; body: string; createdAt: string }
-export interface AuditLog { id: string; actorName: string; action: string; entityType: string; entityId: string; details: string; createdAt: string }
 
 export interface Referral {
   id: string;
@@ -72,6 +125,7 @@ export interface Appointment {
   referralId: string | null;
   patientId: string;
   patientName: string;
+  doctorId: string | null;
   doctorName: string;
   hospitalName: string;
   type: string;

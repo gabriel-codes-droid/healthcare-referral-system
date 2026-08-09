@@ -4,33 +4,32 @@ import {
   Building2,
   CalendarDays,
   ClipboardList,
+  CreditCard,
   FileBarChart,
-  ShieldCheck,
-  RefreshCw,
-  MessageCircle,
   FlaskConical,
   Home,
   Settings,
+  ShieldCheck,
   Stethoscope,
   Users
 } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
-import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
+import { LANGUAGES, type Lang } from '../i18n/translations';
 
 const navItems = [
-  { label: 'Dashboard', key: 'dashboard', icon: Home, path: '/' },
-  { label: 'Patients', key: 'patients', icon: Users, path: '/patients' },
-  { label: 'Appointments', key: 'appointments', icon: CalendarDays, path: '/appointments' },
-  { label: 'Referrals', key: 'referrals', icon: ClipboardList, path: '/referrals' },
-  { label: 'Doctors', key: 'doctors', icon: Stethoscope, path: '/doctors' },
-  { label: 'Hospitals', key: 'hospitals', icon: Building2, path: '/hospitals' },
-  { label: 'Laboratories', key: 'laboratories', icon: FlaskConical, path: '/laboratories' },
-  { label: 'Consultations', key: 'consultations', icon: MessageCircle, path: '/messages' },
-  { label: 'Reports', icon: FileBarChart, path: '/reports' },
-  { label: 'Settings', key: 'settings', icon: Settings, path: '/settings' },
-  { label: 'Offline sync', key: 'settings', icon: RefreshCw, path: '/sync' },
-  { label: 'Compliance', key: 'settings', icon: ShieldCheck, path: '/compliance' }
+  { key: 'nav.dashboard', icon: Home, path: '/', roles: ['admin', 'clinic', 'hospital', 'lab'] },
+  { key: 'nav.patients', icon: Users, path: '/patients', roles: ['admin', 'clinic', 'hospital', 'lab'] },
+  { key: 'nav.appointments', icon: CalendarDays, path: '/appointments', roles: ['admin', 'clinic', 'hospital'] },
+  { key: 'nav.referrals', icon: ClipboardList, path: '/referrals', roles: ['admin', 'clinic', 'hospital'] },
+  { key: 'nav.doctors', icon: Stethoscope, path: '/doctors', roles: ['admin', 'clinic', 'hospital'] },
+  { key: 'nav.hospitals', icon: Building2, path: '/hospitals', roles: ['admin', 'clinic', 'hospital'] },
+  { key: 'nav.laboratories', icon: FlaskConical, path: '/laboratories', roles: ['admin', 'clinic', 'hospital', 'lab'] },
+  { key: 'nav.billing', icon: CreditCard, path: '/billing', roles: ['admin', 'clinic', 'hospital', 'lab'] },
+  { key: 'nav.reports', icon: FileBarChart, path: '/reports', roles: ['admin', 'clinic', 'hospital', 'lab'] },
+  { key: 'nav.auditLog', icon: ShieldCheck, path: '/audit-logs', roles: ['admin'] },
+  { key: 'nav.settings', icon: Settings, path: '/settings', roles: ['admin', 'clinic', 'hospital', 'lab'] }
 ];
 
 type Props = {
@@ -40,16 +39,9 @@ type Props = {
 
 export default function Sidebar({ isOpen = false, onClose }: Props) {
   const { theme, toggleTheme } = useTheme();
-  const { t } = useLanguage();
   const { user } = useAuth();
-  const visibleNav = navItems.filter((item) => {
-    const role = user?.role;
-    if (role === 'patient') return ['/', '/appointments', '/referrals', '/messages', '/settings', '/sync'].includes(item.path);
-    if (role === 'lab') return ['/', '/laboratories', '/messages', '/settings', '/sync'].includes(item.path);
-    if (role === 'clinic') return item.path !== '/compliance';
-    if (role === 'hospital') return item.path !== '/compliance';
-    return true;
-  });
+  const { language, setLanguage, t } = useLanguage();
+  const visibleItems = navItems.filter((item) => !user || item.roles.includes(user.role));
 
   return (
     <>
@@ -62,24 +54,39 @@ export default function Sidebar({ isOpen = false, onClose }: Props) {
         </div>
 
         <nav className="sidebar-nav" aria-label="Primary navigation">
-          {visibleNav.map((item) => {
+          {visibleItems.map((item) => {
             const Icon = item.icon;
             return (
               <NavLink
                 to={item.path}
                 end={item.path === '/'}
                 className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
-                key={item.label}
+                key={item.key}
                 onClick={() => {
                   if (isOpen && onClose) onClose();
                 }}
               >
                 <Icon size={18} />
-                <span>{t(item.key as Parameters<typeof t>[0])}</span>
+                <span>{t(item.key)}</span>
               </NavLink>
             );
           })}
         </nav>
+
+        <label className="mode-toggle">
+          <span>{t('common.language')}</span>
+          <select
+            value={language}
+            onChange={(e) => setLanguage(e.target.value as Lang)}
+            className="lang-select"
+          >
+            {LANGUAGES.map((l) => (
+              <option key={l.code} value={l.code}>
+                {l.label}
+              </option>
+            ))}
+          </select>
+        </label>
 
         <label className="mode-toggle">
           <span>{theme === 'dark' ? 'Dark Mode' : 'Light Mode'}</span>

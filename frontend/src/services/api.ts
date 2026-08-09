@@ -4,25 +4,6 @@ function getToken() {
   return localStorage.getItem('sympra_token');
 }
 
-export type QueuedRequest = { id: string; path: string; options: { method: string; body?: string }; status: 'pending' | 'conflict'; error?: string };
-const offlineQueueKey = 'sympra_offline_queue';
-function enqueue(path: string, options: RequestInit) {
-  const queued: QueuedRequest[] = JSON.parse(localStorage.getItem(offlineQueueKey) || '[]');
-  queued.push({ id: crypto.randomUUID(), path, options: { method: options.method || 'POST', body: options.body as string | undefined }, status: 'pending' });
-  localStorage.setItem(offlineQueueKey, JSON.stringify(queued));
-}
-export async function flushOfflineQueue() {
-  const queued: QueuedRequest[] = JSON.parse(localStorage.getItem(offlineQueueKey) || '[]');
-  const remaining: QueuedRequest[] = [];
-  for (const item of queued) {
-    if (item.status === 'conflict') { remaining.push(item); continue; }
-    try { await request(item.path, item.options); } catch (error) { remaining.push({ ...item, status: error instanceof Error && error.message.toLowerCase().includes('conflict') ? 'conflict' : 'pending', error: error instanceof Error ? error.message : 'Sync failed' }); }
-  }
-  localStorage.setItem(offlineQueueKey, JSON.stringify(remaining));
-}
-export const getOfflineQueue = (): QueuedRequest[] => JSON.parse(localStorage.getItem(offlineQueueKey) || '[]');
-export const discardOfflineItem = (id: string) => localStorage.setItem(offlineQueueKey, JSON.stringify(getOfflineQueue().filter(item => item.id !== id)));
-
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const token = getToken();
   const headers: Record<string, string> = {
@@ -34,15 +15,7 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
     headers.Authorization = `Bearer ${token}`;
   }
 
-  let response: Response;
-  try { response = await fetch(`${API_BASE}${path}`, { ...options, headers }); }
-  catch (cause) {
-    if (options.method && options.method !== 'GET') {
-      enqueue(path, options);
-      return { id: `offline-${Date.now()}`, queuedOffline: true } as T;
-    }
-    throw cause;
-  }
+  const response = await fetch(`${API_BASE}${path}`, { ...options, headers });
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ error: 'Request failed' }));
@@ -53,24 +26,21 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 }
 
 export const api = {
-  messageStreamUrl: () => `${API_BASE}/messages/stream?token=${encodeURIComponent(getToken() || '')}`,
   login: (email: string, password: string) =>
     request<{ token: string; user: import('../Types').User }>('/auth/login', {
       method: 'POST',
       body: JSON.stringify({ email, password })
     }),
 
-  signup: (name: string, email: string, password: string, role?: string, organization?: string, phone?: string) =>
+  signup: (name: string, email: string, password: string, role?: string, organization?: string) =>
     request<{ token: string; user: import('../Types').User }>('/auth/signup', {
       method: 'POST',
-      body: JSON.stringify({ name, email, password, role, organization, phone })
+      body: JSON.stringify({ name, email, password, role, organization })
     }),
 
   getMe: () => request<import('../Types').User>('/auth/me'),
 
   getPatients: () => request<import('../Types').Patient[]>('/patients'),
-  getPatient: (id: string) => request<import('../Types').Patient>(`/patients/${id}`),
-  updatePatient: (id: string, data: Record<string, unknown>) => request<import('../Types').Patient>(`/patients/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
 
   createPatient: (data: Partial<import('../Types').Patient>) =>
     request<import('../Types').Patient>('/patients', { method: 'POST', body: JSON.stringify(data) }),
@@ -80,11 +50,38 @@ export const api = {
       method: 'POST',
       body: JSON.stringify(data)
     }),
+
   getVisits: (patientId: string) => request<import('../Types').Visit[]>(`/patients/${patientId}/visits`),
-  addMedicalHistory: (id: string, data: Record<string, unknown>) => request<import('../Types').Patient>(`/patients/${id}/medical-history`, { method: 'POST', body: JSON.stringify(data) }),
-  addAllergy: (id: string, data: Record<string, unknown>) => request<import('../Types').Patient>(`/patients/${id}/allergies`, { method: 'POST', body: JSON.stringify(data) }),
-  addPrescription: (id: string, data: Record<string, unknown>) => request<import('../Types').Patient>(`/patients/${id}/prescriptions`, { method: 'POST', body: JSON.stringify(data) }),
-  addAttachment: (id: string, data: Record<string, unknown>) => request<import('../Types').Patient>(`/patients/${id}/attachments`, { method: 'POST', body: JSON.stringify(data) }),
+
+  updateAllergies: (patientId: string, allergies: string[]) =>
+    request<import('../Types').Patient>(`/patients/${patientId}/allergies`, {
+      method: 'PATCH',
+      body: JSON.stringify({ allergies })
+    }),
+
+  getPrescriptions: (patientId: string) =>
+    request<import('../Types').Prescription[]>(`/patients/${patientId}/prescriptions`),
+
+  createPrescription: (patientId: string, data: Record<string, unknown>) =>
+    request<import('../Types').Prescription>(`/patients/${patientId}/prescriptions`, {
+      method: 'POST',
+      body: JSON.stringify(data)
+    }),
+
+  getAttachments: (patientId: string) =>
+    request<import('../Types').Attachment[]>(`/patients/${patientId}/attachments`),
+
+  getAttachment: (patientId: string, attachmentId: string) =>
+    request<import('../Types').Attachment>(`/patients/${patientId}/attachments/${attachmentId}`),
+
+  uploadAttachment: (patientId: string, data: Record<string, unknown>) =>
+    request<import('../Types').Attachment>(`/patients/${patientId}/attachments`, {
+      method: 'POST',
+      body: JSON.stringify(data)
+    }),
+
+  deleteAttachment: (patientId: string, attachmentId: string) =>
+    request<{ success: boolean }>(`/patients/${patientId}/attachments/${attachmentId}`, { method: 'DELETE' }),
 
   getReferrals: () => request<import('../Types').Referral[]>('/referrals'),
 
@@ -109,8 +106,20 @@ export const api = {
       body: JSON.stringify({ treatmentNotes })
     }),
 
+  getMessages: (referralId: string) => request<import('../Types').Message[]>(`/messages/${referralId}`),
+
+  sendMessage: (referralId: string, text: string) =>
+    request<import('../Types').Message>(`/messages/${referralId}`, {
+      method: 'POST',
+      body: JSON.stringify({ text })
+    }),
+
   getAppointments: () => request<import('../Types').Appointment[]>('/appointments'),
-  getAvailability: (doctorId: string, date: string) => request<{ slots: string[] }>(`/appointments/availability?doctorId=${doctorId}&date=${date}`),
+
+  getAvailability: (doctorId: string, date: string) =>
+    request<{ date: string; doctorId: string; slots: { time: string; available: boolean }[] }>(
+      `/appointments/availability?doctorId=${doctorId}&date=${date}`
+    ),
 
   createAppointment: (data: Record<string, unknown>) =>
     request<import('../Types').Appointment>('/appointments', {
@@ -128,20 +137,42 @@ export const api = {
       method: 'POST',
       body: JSON.stringify(data)
     }),
-  updateLabTest: (id: string, data: Record<string, unknown>) => request<import('../Types').LabTest>(`/labs/tests/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
-  deleteLabTest: (id: string) => request<void>(`/labs/tests/${id}`, { method: 'DELETE' }),
 
   getHospitals: () => request<import('../Types').Hospital[]>('/hospitals'),
-  createHospital: (data: Record<string, unknown>) => request<import('../Types').Hospital>('/hospitals', { method: 'POST', body: JSON.stringify(data) }),
-  updateHospital: (id: string, data: Record<string, unknown>) => request<import('../Types').Hospital>(`/hospitals/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
-  deleteHospital: (id: string) => request<void>(`/hospitals/${id}`, { method: 'DELETE' }),
+
+  createHospital: (data: Record<string, unknown>) =>
+    request<import('../Types').Hospital>('/hospitals', { method: 'POST', body: JSON.stringify(data) }),
+
+  updateHospital: (id: string, data: Record<string, unknown>) =>
+    request<import('../Types').Hospital>(`/hospitals/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+
+  deleteHospital: (id: string) => request<{ success: boolean }>(`/hospitals/${id}`, { method: 'DELETE' }),
 
   getDoctors: () => request<import('../Types').Doctor[]>('/hospitals/doctors'),
-  createDoctor: (data: Record<string, unknown>) => request<import('../Types').Doctor>('/hospitals/doctors', { method: 'POST', body: JSON.stringify(data) }),
-  updateDoctor: (id: string, data: Record<string, unknown>) => request<import('../Types').Doctor>(`/hospitals/doctors/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
-  deleteDoctor: (id: string) => request<void>(`/hospitals/doctors/${id}`, { method: 'DELETE' }),
+
+  createDoctor: (data: Record<string, unknown>) =>
+    request<import('../Types').Doctor>('/hospitals/doctors', { method: 'POST', body: JSON.stringify(data) }),
+
+  updateDoctor: (id: string, data: Record<string, unknown>) =>
+    request<import('../Types').Doctor>(`/hospitals/doctors/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+
+  deleteDoctor: (id: string) => request<{ success: boolean }>(`/hospitals/doctors/${id}`, { method: 'DELETE' }),
 
   getStats: () => request<import('../Types').DashboardStats>('/hospitals/stats'),
+
+  getInvoices: () => request<import('../Types').Invoice[]>('/billing'),
+
+  getBillingSummary: () =>
+    request<{ collected: number; outstanding: number; count: number }>('/billing/summary'),
+
+  createInvoice: (data: Record<string, unknown>) =>
+    request<import('../Types').Invoice>('/billing', { method: 'POST', body: JSON.stringify(data) }),
+
+  updateInvoiceStatus: (id: string, status: string) =>
+    request<import('../Types').Invoice>(`/billing/${id}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status })
+    }),
 
   sendVerificationCode: (email: string) =>
     request<{ success: boolean; message: string }>('/auth/send-verification-code', {
@@ -166,8 +197,14 @@ export const api = {
       method: 'PATCH',
       body: JSON.stringify(data)
     }),
-  getMessages: (referralId: string) => request<import('../Types').Message[]>(`/messages/referral/${referralId}`),
-  sendMessage: (referralId: string, body: string) => request<import('../Types').Message>(`/messages/referral/${referralId}`, { method: 'POST', body: JSON.stringify({ body }) }),
-  exportPatient: (id: string) => request<Record<string, unknown>>(`/privacy/patients/${id}/export`),
-  getAuditLogs: () => request<import('../Types').AuditLog[]>('/privacy/audit-logs')
+
+  deleteAccount: () => request<{ success: boolean }>('/auth/me', { method: 'DELETE' }),
+
+  exportPatientData: (patientId: string) =>
+    request<Record<string, unknown>>(`/patients/${patientId}/export`),
+
+  deletePatient: (patientId: string) =>
+    request<{ success: boolean }>(`/patients/${patientId}`, { method: 'DELETE' }),
+
+  getAuditLogs: () => request<import('../Types').AuditLogEntry[]>('/audit-logs')
 };

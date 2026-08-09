@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Plus, Stethoscope, ArrowLeft } from 'lucide-react';
+import { Plus, Stethoscope, ArrowLeft, FileText } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import Modal from '../components/Modal';
 import { api } from '../services/api';
@@ -104,14 +104,18 @@ export default function Patients() {
                   <td>{patient.gender || '—'}</td>
                   <td>{new Date(patient.registeredAt).toLocaleDateString()}</td>
                   <td>
-                    <button
-                      type="button"
-                      className="btn-secondary btn-sm"
-                      onClick={() => setVisitModal(patient)}
-                    >
-                      <Stethoscope size={14} /> Examine
-                    </button>
-                    <Link to={`/patients/${patient.id}/records`} className="btn-secondary btn-sm">Record</Link>
+                    <div style={{ display: 'flex', gap: '0.4rem' }}>
+                      <Link to={`/patients/${patient.id}`} className="btn-secondary btn-sm">
+                        <FileText size={14} /> Record
+                      </Link>
+                      <button
+                        type="button"
+                        className="btn-secondary btn-sm"
+                        onClick={() => setVisitModal(patient)}
+                      >
+                        <Stethoscope size={14} /> Examine
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}

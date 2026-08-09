@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const toJSONPlugin = require('./plugins/toJSON');
 
 const appointmentSchema = new mongoose.Schema({
   patientId: { type: mongoose.Schema.Types.ObjectId, ref: 'Patient', required: true },
@@ -14,5 +15,7 @@ const appointmentSchema = new mongoose.Schema({
   notes: { type: String },
   createdAt: { type: Date, default: Date.now }
 });
+
+appointmentSchema.plugin(toJSONPlugin);
 
 module.exports = mongoose.model('Appointment', appointmentSchema);

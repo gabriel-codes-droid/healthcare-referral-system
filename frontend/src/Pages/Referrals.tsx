@@ -1,29 +1,29 @@
 import { useEffect, useState } from 'react';
-import { Check, Plus, X, ArrowLeft } from 'lucide-react';
+import { Check, Plus, X, ArrowLeft, MessageSquare } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import Modal from '../components/Modal';
+import MessageThread from '../components/MessageThread';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
-import type { Doctor, Hospital, Patient, Referral } from '../Types';
+import type { Hospital, Patient, Referral } from '../Types';
 
 export default function Referrals() {
   const { user } = useAuth();
   const [referrals, setReferrals] = useState<Referral[]>([]);
   const [patients, setPatients] = useState<Patient[]>([]);
   const [hospitals, setHospitals] = useState<Hospital[]>([]);
-  const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [acceptModal, setAcceptModal] = useState<Referral | null>(null);
   const [completeModal, setCompleteModal] = useState<Referral | null>(null);
+  const [chatModal, setChatModal] = useState<Referral | null>(null);
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
 
   const load = async () => {
-    const [r, p, h, d] = await Promise.all([api.getReferrals(), api.getPatients(), api.getHospitals(), api.getDoctors()]);
+    const [r, p, h] = await Promise.all([api.getReferrals(), api.getPatients(), api.getHospitals()]);
     setReferrals(r);
     setPatients(p);
     setHospitals(h);
-    setDoctors(d);
   };
 
   useEffect(() => {
@@ -40,15 +40,15 @@ export default function Referrals() {
     const form = new FormData(e.currentTarget);
     try {
       const patientId = form.get('patientId') as string;
-      await api.recordVisit(patientId, {
+      const visit = await api.recordVisit(patientId, {
         chiefComplaint: form.get('chiefComplaint'),
         diagnosis: form.get('diagnosis'),
         referralNeeded: true
       });
       await api.createReferral({
         patientId,
+        visitId: visit.id,
         toOrganization: form.get('toOrganization'),
-        assignedDoctorId: form.get('assignedDoctorId'),
         reason: form.get('reason'),
         priority: form.get('priority'),
         notes: form.get('notes')
@@ -200,6 +200,13 @@ export default function Referrals() {
                           Complete
                         </button>
                       )}
+                      <button
+                        type="button"
+                        className="btn-secondary btn-sm"
+                        onClick={() => setChatModal(referral)}
+                      >
+                        <MessageSquare size={14} /> Message
+                      </button>
                     </div>
                   </td>
                 </tr>
@@ -236,13 +243,6 @@ export default function Referrals() {
           <label>
             Reason *
             <input name="reason" required />
-          </label>
-          <label>
-            Specialist
-            <select name="assignedDoctorId">
-              <option value="">Any appropriate specialist</option>
-              {doctors.map((doctor) => <option key={doctor.id} value={doctor.id}>{doctor.name} — {doctor.specialty}</option>)}
-            </select>
           </label>
           <label>
             Priority
@@ -321,6 +321,13 @@ export default function Referrals() {
             Mark Completed
           </button>
         </form>
+      </Modal>
+      <Modal
+        title={`Consultation — ${chatModal?.patientName}`}
+        open={Boolean(chatModal)}
+        onClose={() => setChatModal(null)}
+      >
+        {chatModal && <MessageThread referralId={chatModal.id} active={Boolean(chatModal)} />}
       </Modal>
     </>
   );

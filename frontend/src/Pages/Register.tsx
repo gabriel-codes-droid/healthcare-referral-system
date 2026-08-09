@@ -1,4 +1,4 @@
-import { Activity, Eye, EyeOff, Loader2, ArrowLeft } from 'lucide-react';
+import { Activity, Loader2, ArrowLeft, Eye, EyeOff } from 'lucide-react';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -14,7 +14,6 @@ export default function Register() {
   const [showPassword, setShowPassword] = useState(false);
   const [role, setRole] = useState('clinic');
   const [organization, setOrganization] = useState('');
-  const [phone, setPhone] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -23,7 +22,7 @@ export default function Register() {
     setError('');
     setLoading(true);
     try {
-      await signup(name, email, password, role, organization, phone);
+      await signup(name, email, password, role, organization);
       navigate('/');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Registration failed');
@@ -72,15 +71,25 @@ export default function Register() {
           </label>
           <label>
             Password
-            <input
-              type={showPassword ? 'text' : 'password'}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              placeholder="••••••••"
-              minLength={6}
-            />
-            <button type="button" className="btn-secondary btn-sm" onClick={() => setShowPassword(!showPassword)} aria-label={showPassword ? 'Hide password' : 'Show password'}>{showPassword ? <EyeOff size={15} /> : <Eye size={15} />}</button>
+            <div className="password-input-wrap">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                placeholder="••••••••"
+                minLength={6}
+              />
+              <button
+                type="button"
+                className="password-toggle"
+                onClick={() => setShowPassword((prev) => !prev)}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                tabIndex={-1}
+              >
+                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            </div>
           </label>
           <label>
             Role
@@ -89,18 +98,16 @@ export default function Register() {
               <option value="hospital">Hospital</option>
               <option value="lab">Laboratory</option>
               <option value="admin">Admin</option>
-              <option value="patient">Patient</option>
             </select>
           </label>
-          {role === 'patient' && <label>Phone<input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+250..." /></label>}
           <label>
             Organization
             <input
               type="text"
               value={organization}
               onChange={(e) => setOrganization(e.target.value)}
-              required={role !== 'patient'}
-              placeholder={role === 'patient' ? 'Optional' : 'City Clinic'}
+              required
+              placeholder="City Clinic"
             />
           </label>
           {error && <p className="form-error">{error}</p>}

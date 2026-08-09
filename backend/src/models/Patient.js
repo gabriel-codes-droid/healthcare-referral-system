@@ -1,19 +1,18 @@
 const mongoose = require('mongoose');
+const toJSONPlugin = require('./plugins/toJSON');
 
 const patientSchema = new mongoose.Schema({
   name: { type: String, required: true },
   email: { type: String, required: true },
   phone: { type: String },
-  dateOfBirth: { type: Date },
-  gender: { type: String, enum: ['Male', 'Female', 'Other', ''], default: '' },
+  dateOfBirth: { type: Date, required: true },
+  gender: { type: String, enum: ['Male', 'Female', 'Other'], required: true },
   address: { type: String },
+  allergies: { type: [String], default: [] },
   avatar: { type: String },
-  medicalHistory: [{ condition: String, diagnosedOn: Date, notes: String }],
-  allergies: [{ substance: String, reaction: String, severity: String }],
-  prescriptions: [{ medication: String, dosage: String, instructions: String, prescribedOn: { type: Date, default: Date.now } }],
-  attachments: [{ name: String, url: String, mimeType: String, uploadedAt: { type: Date, default: Date.now } }],
-  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   registeredAt: { type: Date, default: Date.now }
 });
+
+patientSchema.plugin(toJSONPlugin);
 
 module.exports = mongoose.model('Patient', patientSchema);

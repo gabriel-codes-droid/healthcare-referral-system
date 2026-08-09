@@ -1,5 +1,5 @@
-import { useState, useRef } from 'react';
-import { User, Lock, LogOut, Camera, Mail, Shield, Check } from 'lucide-react';
+import React, { useRef, useState } from 'react';
+import { User, Lock, LogOut, Camera, Mail, Shield, Check, X, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
 import Modal from '../components/Modal';
@@ -28,6 +28,9 @@ export default function Settings() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [passwordSaving, setPasswordSaving] = useState(false);
   const [passwordError, setPasswordError] = useState('');
+  const [generatedCode, setGeneratedCode] = useState('');
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -290,6 +293,7 @@ export default function Settings() {
           setVerificationCode('');
           setNewPassword('');
           setConfirmPassword('');
+          setGeneratedCode('');
         }}
       >
         {resetStep === 'request' && (
@@ -349,25 +353,47 @@ export default function Settings() {
           <form className="form-grid" onSubmit={handlePasswordReset}>
             <label className="full-width">
               New Password *
-              <input
-                name="newPassword"
-                type="password"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="At least 8 characters"
-                required
-              />
+              <div className="password-input-wrap">
+                <input
+                  name="newPassword"
+                  type={showNewPassword ? 'text' : 'password'}
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="At least 8 characters"
+                  required
+                />
+                <button
+                  type="button"
+                  className="password-toggle"
+                  onClick={() => setShowNewPassword((prev) => !prev)}
+                  aria-label={showNewPassword ? 'Hide password' : 'Show password'}
+                  tabIndex={-1}
+                >
+                  {showNewPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
             </label>
             <label className="full-width">
               Confirm Password *
-              <input
-                name="confirmPassword"
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="Re-enter new password"
-                required
-              />
+              <div className="password-input-wrap">
+                <input
+                  name="confirmPassword"
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Re-enter new password"
+                  required
+                />
+                <button
+                  type="button"
+                  className="password-toggle"
+                  onClick={() => setShowConfirmPassword((prev) => !prev)}
+                  aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
+                  tabIndex={-1}
+                >
+                  {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
             </label>
             {passwordError && <p className="form-error full-width">{passwordError}</p>}
             <button type="submit" className="btn-primary full-width" disabled={passwordSaving}>

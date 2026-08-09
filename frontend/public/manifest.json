@@ -1,0 +1,17 @@
+{
+  "name": "Sympra Healthcare",
+  "short_name": "Sympra",
+  "description": "Healthcare referral, patient, and clinic management platform",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f0f4f8",
+  "theme_color": "#3b82f6",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

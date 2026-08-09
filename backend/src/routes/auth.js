@@ -2,9 +2,9 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const User = require('../models/User');
-const Patient = require('../models/Patient');
 const { JWT_SECRET } = require('../middleware/auth');
 const { sendVerificationEmail } = require('../services/email');
+const { logAudit } = require('../utils/audit');
 
 const router = express.Router();
 
@@ -31,9 +31,16 @@ router.post('/login', async (req, res) => {
       { expiresIn: '24h' }
     );
 
-    const { password: _, ...safeUser } = user.toObject();
+    const { password: _, ...safeUser } = user.toJSON();
+    logAudit(
+      { user: { id: user._id, name: user.name, organization: user.organization, role: user.role } },
+      'login',
+      'User',
+      user._id
+    );
     res.json({ token, user: safeUser });
   } catch (error) {
+    console.error('Login error:', error);
     res.status(500).json({ error: 'Login failed' });
   }
 });
@@ -50,7 +57,7 @@ router.get('/me', async (req, res) => {
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
-    const { password: _, ...safeUser } = user.toObject();
+    const { password: _, ...safeUser } = user.toJSON();
     res.json(safeUser);
   } catch {
     return res.status(401).json({ error: 'Invalid or expired token' });
@@ -58,7 +65,7 @@ router.get('/me', async (req, res) => {
 });
 
 router.post('/signup', async (req, res) => {
-  const { name, email, password, role, organization, phone, dateOfBirth, gender, address } = req.body;
+  const { name, email, password, role, organization } = req.body;
   if (!name || !email || !password) {
     return res.status(400).json({ error: 'Name, email, and password are required' });
   }
@@ -79,11 +86,6 @@ router.post('/signup', async (req, res) => {
     });
 
     await newUser.save();
-    if (newUser.role === 'patient') {
-      const patient = await Patient.create({ name, email, phone: phone || '', dateOfBirth: dateOfBirth || undefined, gender: gender || '', address: address || '', userId: newUser._id, avatar: newUser.avatar });
-      newUser.patientId = patient._id;
-      await newUser.save();
-    }
 
     const token = jwt.sign(
       { id: newUser._id, email: newUser.email, role: newUser.role, name: newUser.name, organization: newUser.organization },
@@ -91,13 +93,11 @@ router.post('/signup', async (req, res) => {
       { expiresIn: '24h' }
     );
 
-    const { password: _, ...safeUser } = newUser.toObject();
+    const { password: _, ...safeUser } = newUser.toJSON();
     res.status(201).json({ token, user: safeUser });
   } catch (error) {
-    console.error('Signup failed:', error);
-    if (error.code === 11000) return res.status(409).json({ error: 'Email already registered' });
-    if (error.name === 'ValidationError') return res.status(400).json({ error: error.message });
-    res.status(500).json({ error: 'Signup failed. Check the server logs for details.' });
+    console.error('Signup error:', error);
+    res.status(500).json({ error: 'Signup failed' });
   }
 });
 
@@ -125,6 +125,7 @@ router.post('/send-verification-code', async (req, res) => {
 
     res.json({ success: true, message: 'Verification code sent' });
   } catch (error) {
+    console.error('Send verification code error:', error);
     res.status(500).json({ error: 'Failed to send verification code' });
   }
 });
@@ -147,6 +148,7 @@ router.post('/verify-code', async (req, res) => {
 
     res.json({ success: true, message: 'Code verified' });
   } catch (error) {
+    console.error('Verify code error:', error);
     res.status(500).json({ error: 'Verification failed' });
   }
 });
@@ -174,6 +176,7 @@ router.post('/reset-password', async (req, res) => {
 
     res.json({ success: true, message: 'Password reset successfully' });
   } catch (error) {
+    console.error('Reset password error:', error);
     res.status(500).json({ error: 'Password reset failed' });
   }
 });
@@ -198,10 +201,37 @@ router.patch('/profile', async (req, res) => {
 
     await user.save();
 
-    const { password: _, ...safeUser } = user.toObject();
+    const { password: _, ...safeUser } = user.toJSON();
     res.json(safeUser);
   } catch (error) {
+    console.error('Profile update error:', error);
     res.status(500).json({ error: 'Profile update failed' });
+  }
+});
+
+router.delete('/me', async (req, res) => {
+  const header = req.headers.authorization;
+  if (!header?.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Authentication required' });
+  }
+
+  try {
+    const payload = jwt.verify(header.slice(7), JWT_SECRET);
+    const user = await User.findByIdAndDelete(payload.id);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    logAudit(
+      { user: { id: user._id, name: user.name, organization: user.organization, role: user.role } },
+      'account.delete',
+      'User',
+      user._id
+    );
+
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: 'Account deletion failed' });
   }
 });
 

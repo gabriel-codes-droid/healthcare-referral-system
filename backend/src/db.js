@@ -1,13 +1,15 @@
 const mongoose = require('mongoose');
-const dns = require('node:dns');
+const dns = require('dns');
+
+// Some networks/ISPs/routers use DNS resolvers that don't properly support
+// the SRV record lookups mongodb+srv:// connection strings rely on, causing
+// "querySrv ECONNREFUSED" even with correct credentials. Forcing a public
+// DNS resolver here fixes that without needing an OS-level network change.
+if (process.env.MONGODB_URI?.startsWith('mongodb+srv://')) {
+  dns.setServers([process.env.MONGODB_DNS_SERVER || '8.8.8.8', '1.1.1.1']);
+}
 
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/healthcare-referral-system';
-
-// Some ISP/network resolvers refuse MongoDB Atlas SRV queries. Set this in
-// .env (for example 8.8.8.8 or 1.1.1.1) to use a known DNS resolver instead.
-if (process.env.MONGODB_DNS_SERVER) {
-  dns.setServers(process.env.MONGODB_DNS_SERVER.split(',').map((server) => server.trim()));
-}
 
 async function connectDB() {
   try {

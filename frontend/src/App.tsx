@@ -7,17 +7,16 @@ import Login from './Pages/Login';
 import Register from './Pages/Register';
 import Dashboard from './Pages/Dashboard';
 import Patients from './Pages/Patients';
+import PatientRecord from './Pages/PatientRecord';
 import Referrals from './Pages/Referrals';
 import Appointments from './Pages/Appointments';
 import Laboratories from './Pages/Laboratories';
+import Billing from './Pages/Billing';
+import AuditLogs from './Pages/AuditLogs';
 import Doctors from './Pages/Doctors';
 import Hospitals from './Pages/Hospitals';
 import Settings from './Pages/Settings';
 import PlaceholderPage from './Pages/PlaceholderPage';
-import MedicalRecords from './Pages/MedicalRecords';
-import Messages from './Pages/Messages';
-import Compliance from './Pages/Compliance';
-import SyncCenter from './Pages/SyncCenter';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -35,6 +34,14 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
     return <Navigate to="/login" replace />;
   }
 
+  return <>{children}</>;
+}
+
+function RoleRoute({ roles, children }: { roles: string[]; children: React.ReactNode }) {
+  const { user } = useAuth();
+  if (user && !roles.includes(user.role)) {
+    return <Navigate to="/" replace />;
+  }
   return <>{children}</>;
 }
 
@@ -60,15 +67,14 @@ function AppRoutes() {
       >
         <Route index element={<Dashboard />} />
         <Route path="patients" element={<Patients />} />
-        <Route path="patients/:id/records" element={<MedicalRecords />} />
-        <Route path="appointments" element={<Appointments />} />
-        <Route path="referrals" element={<Referrals />} />
-        <Route path="doctors" element={<Doctors />} />
-        <Route path="hospitals" element={<Hospitals />} />
+        <Route path="patients/:id" element={<PatientRecord />} />
+        <Route path="appointments" element={<RoleRoute roles={['admin', 'clinic', 'hospital']}><Appointments /></RoleRoute>} />
+        <Route path="referrals" element={<RoleRoute roles={['admin', 'clinic', 'hospital']}><Referrals /></RoleRoute>} />
+        <Route path="doctors" element={<RoleRoute roles={['admin', 'clinic', 'hospital']}><Doctors /></RoleRoute>} />
+        <Route path="hospitals" element={<RoleRoute roles={['admin', 'clinic', 'hospital']}><Hospitals /></RoleRoute>} />
         <Route path="laboratories" element={<Laboratories />} />
-        <Route path="messages" element={<Messages />} />
-        <Route path="compliance" element={<Compliance />} />
-        <Route path="sync" element={<SyncCenter />} />
+        <Route path="billing" element={<Billing />} />
+        <Route path="audit-logs" element={<RoleRoute roles={['admin']}><AuditLogs /></RoleRoute>} />
         <Route
           path="reports"
           element={<PlaceholderPage title="Reports" description="Analytics and reporting coming soon." />}
@@ -85,12 +91,14 @@ function AppRoutes() {
 
 export default function App() {
   return (
-    <ThemeProvider>
-      <LanguageProvider><AuthProvider>
-        <BrowserRouter>
-          <AppRoutes />
-        </BrowserRouter>
-      </AuthProvider></LanguageProvider>
-    </ThemeProvider>
+    <LanguageProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <BrowserRouter>
+            <AppRoutes />
+          </BrowserRouter>
+        </AuthProvider>
+      </ThemeProvider>
+    </LanguageProvider>
   );
 }

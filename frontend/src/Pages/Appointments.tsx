@@ -1,20 +1,23 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Plus, ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import Modal from '../components/Modal';
-import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
-import type { Appointment, Doctor, Patient } from '../Types';
+import type { Appointment, Patient, Doctor } from '../Types';
 
 export default function Appointments() {
-  const { user } = useAuth();
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [patients, setPatients] = useState<Patient[]>([]);
   const [doctors, setDoctors] = useState<Doctor[]>([]);
-  const [availableSlots, setAvailableSlots] = useState<string[]>([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
+
+  const [selectedDoctorId, setSelectedDoctorId] = useState('');
+  const [selectedDate, setSelectedDate] = useState('');
+  const [selectedTime, setSelectedTime] = useState('');
+  const [slots, setSlots] = useState<{ time: string; available: boolean }[]>([]);
+  const [loadingSlots, setLoadingSlots] = useState(false);
 
   const load = async () => {
     const [a, p, d] = await Promise.all([api.getAppointments(), api.getPatients(), api.getDoctors()]);
@@ -27,30 +30,70 @@ export default function Appointments() {
     load().catch(console.error);
   }, []);
 
+  useEffect(() => {
+    if (!selectedDoctorId || !selectedDate) {
+      setSlots([]);
+      return;
+    }
+    setLoadingSlots(true);
+    setSelectedTime('');
+    api
+      .getAvailability(selectedDoctorId, selectedDate)
+      .then((res) => setSlots(res.slots))
+      .catch(() => setSlots([]))
+      .finally(() => setLoadingSlots(false));
+  }, [selectedDoctorId, selectedDate]);
+
+  const groupedByDate = useMemo(() => {
+    const groups = new Map<string, Appointment[]>();
+    appointments.forEach((appt) => {
+      const key = new Date(appt.date).toLocaleDateString(undefined, {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+      groups.set(key, [...(groups.get(key) || []), appt]);
+    });
+    return Array.from(groups.entries()).sort(
+      (a, b) => new Date(b[1][0].date).getTime() - new Date(a[1][0].date).getTime()
+    );
+  }, [appointments]);
+
+  const resetForm = () => {
+    setSelectedDoctorId('');
+    setSelectedDate('');
+    setSelectedTime('');
+    setSlots([]);
+    setError('');
+  };
+
   const handleCreate = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (!selectedTime) {
+      setError('Pick an available time slot');
+      return;
+    }
     setSaving(true);
     setError('');
     const form = new FormData(e.currentTarget);
     try {
       await api.createAppointment({
         patientId: form.get('patientId'),
-        doctorName: form.get('doctorName'),
-        doctorId: form.get('doctorId'),
-        hospitalName: form.get('hospitalName'),
+        doctorId: selectedDoctorId || undefined,
         type: form.get('type'),
-        date: form.get('date'),
-        time: form.get('time')
+        date: selectedDate,
+        time: selectedTime
       });
       setModalOpen(false);
+      resetForm();
       await load();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed');
+      setError(err instanceof Error ? err.message : 'Failed to schedule appointment');
     } finally {
       setSaving(false);
     }
   };
-  const calendarDays = Array.from({ length: 7 }, (_, index) => { const date = new Date(); date.setHours(0, 0, 0, 0); date.setDate(date.getDate() + index); return date; });
 
   return (
     <>
@@ -67,53 +110,58 @@ export default function Appointments() {
         </button>
       </div>
 
-      <section className="panel">
-        <div className="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Patient</th>
-                <th>Type</th>
-                <th>Doctor</th>
-                <th>Hospital</th>
-                <th>Date</th>
-                <th>Time</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {appointments.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className="empty-cell">
-                    No appointments scheduled
-                  </td>
-                </tr>
-              ) : (
-                appointments.map((appt) => (
-                  <tr key={appt.id}>
-                    <td>{appt.patientName}</td>
-                    <td>{appt.type}</td>
-                    <td>{appt.doctorName}</td>
-                    <td>{appt.hospitalName}</td>
-                    <td>{new Date(appt.date).toLocaleDateString()}</td>
-                    <td>{appt.time}</td>
-                    <td>
-                      <span className={`status ${appt.status}`}>{appt.status}</span>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </section>
+      {groupedByDate.length === 0 ? (
+        <section className="panel" style={{ padding: '1.5rem' }}>
+          <p className="empty-text">No appointments scheduled</p>
+        </section>
+      ) : (
+        groupedByDate.map(([dayLabel, dayAppointments]) => (
+          <div key={dayLabel} className="day-group">
+            <h3>{dayLabel}</h3>
+            <section className="panel">
+              <div className="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Patient</th>
+                      <th>Type</th>
+                      <th>Doctor</th>
+                      <th>Hospital</th>
+                      <th>Time</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {dayAppointments
+                      .sort((a, b) => a.time.localeCompare(b.time))
+                      .map((appt) => (
+                        <tr key={appt.id}>
+                          <td>{appt.patientName}</td>
+                          <td>{appt.type}</td>
+                          <td>{appt.doctorName}</td>
+                          <td>{appt.hospitalName}</td>
+                          <td>{appt.time}</td>
+                          <td>
+                            <span className={`status ${appt.status}`}>{appt.status}</span>
+                          </td>
+                        </tr>
+                      ))}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          </div>
+        ))
+      )}
 
-      <section className="panel" style={{ marginTop: '1.5rem' }}>
-        <div className="panel-header"><h2>7-day calendar</h2></div>
-        <div className="table-wrap"><table><thead><tr>{calendarDays.map(day => <th key={day.toISOString()}>{day.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}</th>)}</tr></thead><tbody><tr>{calendarDays.map(day => { const key = day.toISOString().slice(0, 10); const daily = appointments.filter(a => new Date(a.date).toISOString().slice(0, 10) === key); return <td key={key} style={{ verticalAlign: 'top', minWidth: '130px' }}>{daily.length ? daily.map(a => <div className="result-badge" key={a.id}>{a.time}<br/>{a.patientName}<br/>{a.doctorName}</div>) : <small className="empty-cell">Available</small>}</td>; })}</tr></tbody></table></div>
-      </section>
-
-      <Modal title="Schedule Appointment" open={modalOpen} onClose={() => setModalOpen(false)}>
+      <Modal
+        title="Schedule Appointment"
+        open={modalOpen}
+        onClose={() => {
+          setModalOpen(false);
+          resetForm();
+        }}
+      >
         <form className="form-grid" onSubmit={handleCreate}>
           <label>
             Patient *
@@ -127,30 +175,54 @@ export default function Appointments() {
             </select>
           </label>
           <label>
-            Doctor
-            <select name="doctorId" onChange={(e) => { const date = (e.currentTarget.form?.elements.namedItem('date') as HTMLInputElement)?.value; if (e.target.value && date) api.getAvailability(e.target.value, date).then(x => setAvailableSlots(x.slots)); }}>
-              <option value="">{user?.name || 'Select doctor'}</option>
-              {doctors.map(d => <option key={d.id} value={d.id}>{d.name} — {d.specialty}</option>)}
-            </select>
-          </label>
-          <input type="hidden" name="doctorName" value={user?.name || ''} />
-          <label>
-            Hospital
-            <input name="hospitalName" defaultValue={user?.organization} />
-          </label>
-          <label>
             Type
-            <input name="type" placeholder="General Checkup" />
+            <input name="type" placeholder="General Checkup" defaultValue="consultation" />
+          </label>
+          <label>
+            Doctor *
+            <select value={selectedDoctorId} onChange={(e) => setSelectedDoctorId(e.target.value)} required>
+              <option value="">Select doctor</option>
+              {doctors.map((d) => (
+                <option key={d.id} value={d.id}>
+                  {d.name} — {d.specialty}
+                </option>
+              ))}
+            </select>
           </label>
           <label>
             Date *
-            <input name="date" type="date" required />
+            <input
+              type="date"
+              value={selectedDate}
+              min={new Date().toISOString().split('T')[0]}
+              onChange={(e) => setSelectedDate(e.target.value)}
+              required
+            />
           </label>
-          <label>
-            Time *
-            <input name="time" type="time" required />
+          <label className="full-width">
+            Available Time Slots *
+            {!selectedDoctorId || !selectedDate ? (
+              <p className="empty-text" style={{ margin: '0.4rem 0 0' }}>
+                Choose a doctor and date to see availability
+              </p>
+            ) : loadingSlots ? (
+              <p style={{ margin: '0.4rem 0 0' }}>Loading availability...</p>
+            ) : (
+              <div className="slot-grid">
+                {slots.map((slot) => (
+                  <button
+                    type="button"
+                    key={slot.time}
+                    className={`slot-btn ${selectedTime === slot.time ? 'selected' : ''}`}
+                    disabled={!slot.available}
+                    onClick={() => setSelectedTime(slot.time)}
+                  >
+                    {slot.time}
+                  </button>
+                ))}
+              </div>
+            )}
           </label>
-          {availableSlots.length > 0 && <p className="form-hint full-width">Available: {availableSlots.join(', ')}</p>}
           {error && <p className="form-error full-width">{error}</p>}
           <button type="submit" className="btn-primary full-width" disabled={saving}>
             Schedule

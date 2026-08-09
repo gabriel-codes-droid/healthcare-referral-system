@@ -3,18 +3,28 @@ const Appointment = require('../models/Appointment');
 const Patient = require('../models/Patient');
 const Doctor = require('../models/Doctor');
 const { auth, requireRole } = require('../middleware/auth');
-const { audit } = require('../services/audit');
 
 const router = express.Router();
+
+const WORK_START_MIN = 9 * 60; // 09:00
+const WORK_END_MIN = 17 * 60; // 17:00
+const SLOT_MINUTES = 30;
+
+function generateDaySlots() {
+  const slots = [];
+  for (let mins = WORK_START_MIN; mins < WORK_END_MIN; mins += SLOT_MINUTES) {
+    const h = String(Math.floor(mins / 60)).padStart(2, '0');
+    const m = String(mins % 60).padStart(2, '0');
+    slots.push(`${h}:${m}`);
+  }
+  return slots;
+}
 
 router.get('/', auth, async (req, res) => {
   try {
     let appointments = await Appointment.find();
 
-    if (req.user.role === 'patient') {
-      const patient = await Patient.findOne({ email: req.user.email });
-      appointments = patient ? appointments.filter((a) => a.patientId.toString() === patient._id.toString()) : [];
-    } else if (req.user.role === 'hospital') {
+    if (req.user.role === 'hospital') {
       appointments = appointments.filter((a) => a.hospitalName === req.user.organization);
     }
 
@@ -26,13 +36,26 @@ router.get('/', auth, async (req, res) => {
 
 router.get('/availability', auth, async (req, res) => {
   const { doctorId, date } = req.query;
-  if (!doctorId || !date) return res.status(400).json({ error: 'Doctor and date are required' });
-  const [booked, doctor] = await Promise.all([Appointment.find({ doctorId, date: new Date(date), status: 'scheduled' }).select('time'), Doctor.findById(doctorId)]);
-  if (!doctor) return res.status(404).json({ error: 'Doctor not found' });
-  const weekday = new Intl.DateTimeFormat('en-US', { weekday: 'long' }).format(new Date(`${date}T12:00:00`));
-  const configured = doctor.availability?.find((entry) => entry.day === weekday)?.slots;
-  const slots = configured?.length ? configured : ['08:00', '09:00', '10:00', '11:00', '13:00', '14:00', '15:00', '16:00'];
-  res.json({ slots: slots.filter((slot) => !booked.some((a) => a.time === slot)), booked: booked.map((a) => a.time) });
+  if (!doctorId || !date) {
+    return res.status(400).json({ error: 'doctorId and date are required' });
+  }
+
+  try {
+    const dayStart = new Date(`${date}T00:00:00.000Z`);
+    const dayEnd = new Date(`${date}T23:59:59.999Z`);
+
+    const booked = await Appointment.find({
+      doctorId,
+      date: { $gte: dayStart, $lte: dayEnd },
+      status: { $ne: 'cancelled' }
+    });
+    const bookedTimes = new Set(booked.map((a) => a.time));
+
+    const slots = generateDaySlots().map((time) => ({ time, available: !bookedTimes.has(time) }));
+    res.json({ date, doctorId, slots });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch availability' });
+  }
 });
 
 router.post('/', auth, requireRole('admin', 'hospital', 'clinic'), async (req, res) => {
@@ -47,11 +70,30 @@ router.post('/', auth, requireRole('admin', 'hospital', 'clinic'), async (req, r
       return res.status(404).json({ error: 'Patient not found' });
     }
 
+    let resolvedDoctorName = doctorName || req.user.name;
+    if (doctorId) {
+      const doctor = await Doctor.findById(doctorId);
+      if (!doctor) {
+        return res.status(404).json({ error: 'Doctor not found' });
+      }
+      resolvedDoctorName = doctor.name;
+
+      const conflict = await Appointment.findOne({
+        doctorId,
+        date: new Date(date),
+        time,
+        status: { $ne: 'cancelled' }
+      });
+      if (conflict) {
+        return res.status(409).json({ error: 'This doctor is already booked for that time slot' });
+      }
+    }
+
     const appointment = new Appointment({
       patientId,
       patientName: patient.name,
       doctorId: doctorId || undefined,
-      doctorName: doctorName || req.user.name,
+      doctorName: resolvedDoctorName,
       hospitalName: hospitalName || req.user.organization,
       type: type || 'consultation',
       date,
@@ -60,7 +102,6 @@ router.post('/', auth, requireRole('admin', 'hospital', 'clinic'), async (req, r
     });
 
     await appointment.save();
-    audit(req, 'appointment.created', 'Appointment', appointment._id);
     res.status(201).json(appointment);
   } catch (error) {
     res.status(500).json({ error: 'Failed to create appointment' });
@@ -79,7 +120,6 @@ router.patch('/:id/status', auth, requireRole('admin', 'hospital', 'clinic'), as
 
     appointment.status = status || appointment.status;
     await appointment.save();
-    audit(req, 'appointment.status_updated', 'Appointment', appointment._id, appointment.status);
     res.json(appointment);
   } catch (error) {
     res.status(500).json({ error: 'Failed to update appointment' });
