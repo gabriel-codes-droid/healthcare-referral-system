@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { User, Lock, LogOut, Camera, Mail, Shield, Check, X, Eye, EyeOff } from 'lucide-react';
+import { User, Lock, LogOut, Camera, Mail, Shield, Check, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
 import Modal from '../components/Modal';
@@ -28,7 +28,7 @@ export default function Settings() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [passwordSaving, setPasswordSaving] = useState(false);
   const [passwordError, setPasswordError] = useState('');
-  const [generatedCode, setGeneratedCode] = useState('');
+  const [, setGeneratedCode] = useState('');
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
