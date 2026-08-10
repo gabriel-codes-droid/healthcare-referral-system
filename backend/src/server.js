@@ -10,7 +10,6 @@ const appointmentRoutes = require('./routes/appointments');
 const labRoutes = require('./routes/labs');
 const hospitalRoutes = require('./routes/hospitals');
 const messageRoutes = require('./routes/messages');
-const billingRoutes = require('./routes/billing');
 const auditLogRoutes = require('./routes/auditLogs');
 
 const app = express();
@@ -56,7 +55,6 @@ app.use('/api/appointments', appointmentRoutes);
 app.use('/api/labs', labRoutes);
 app.use('/api/hospitals', hospitalRoutes);
 app.use('/api/messages', messageRoutes);
-app.use('/api/billing', billingRoutes);
 app.use('/api/audit-logs', auditLogRoutes);
 
 app.use((err, _req, res, _next) => {

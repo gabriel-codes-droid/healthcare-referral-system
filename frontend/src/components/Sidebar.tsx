@@ -4,7 +4,6 @@ import {
   Building2,
   CalendarDays,
   ClipboardList,
-  CreditCard,
   FileBarChart,
   FlaskConical,
   Home,
@@ -26,7 +25,6 @@ const navItems = [
   { key: 'nav.doctors', icon: Stethoscope, path: '/doctors', roles: ['admin', 'clinic', 'hospital'] },
   { key: 'nav.hospitals', icon: Building2, path: '/hospitals', roles: ['admin', 'clinic', 'hospital'] },
   { key: 'nav.laboratories', icon: FlaskConical, path: '/laboratories', roles: ['admin', 'clinic', 'hospital', 'lab'] },
-  { key: 'nav.billing', icon: CreditCard, path: '/billing', roles: ['admin', 'clinic', 'hospital', 'lab'] },
   { key: 'nav.reports', icon: FileBarChart, path: '/reports', roles: ['admin', 'clinic', 'hospital', 'lab'] },
   { key: 'nav.auditLog', icon: ShieldCheck, path: '/audit-logs', roles: ['admin'] },
   { key: 'nav.settings', icon: Settings, path: '/settings', roles: ['admin', 'clinic', 'hospital', 'lab'] }

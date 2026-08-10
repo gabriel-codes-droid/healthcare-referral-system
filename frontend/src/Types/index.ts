@@ -35,23 +35,6 @@ export interface Prescription {
   prescribedAt: string;
 }
 
-export interface Invoice {
-  id: string;
-  patientId: string;
-  patientName: string;
-  serviceType: string;
-  description: string;
-  amount: number;
-  currency: string;
-  payerType: 'self-pay' | 'insurance';
-  insuranceProvider: string;
-  insurancePolicyNumber: string;
-  status: 'pending' | 'paid' | 'overdue' | 'cancelled';
-  issuedBy: string;
-  issuedByOrg: string;
-  issuedAt: string;
-  paidAt: string | null;
-}
 export interface AuditLogEntry {
   id: string;
   userName: string;

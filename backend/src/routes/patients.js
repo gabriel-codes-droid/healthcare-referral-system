@@ -7,7 +7,6 @@ const Referral = require('../models/Referral');
 const Appointment = require('../models/Appointment');
 const LabTest = require('../models/LabTest');
 const LabResult = require('../models/LabResult');
-const Invoice = require('../models/Invoice');
 const { auth, requireRole } = require('../middleware/auth');
 const { logAudit } = require('../utils/audit');
 
@@ -46,14 +45,13 @@ router.get('/:id/export', auth, requireRole('admin', 'clinic', 'hospital'), asyn
       return res.status(404).json({ error: 'Patient not found' });
     }
 
-    const [visits, prescriptions, attachments, referrals, appointments, labTests, invoices] = await Promise.all([
+    const [visits, prescriptions, attachments, referrals, appointments, labTests] = await Promise.all([
       Visit.find({ patientId: patient._id }),
       Prescription.find({ patientId: patient._id }),
       Attachment.find({ patientId: patient._id }).select('-data'),
       Referral.find({ patientId: patient._id }),
       Appointment.find({ patientId: patient._id }),
-      LabTest.find({ patientId: patient._id }),
-      Invoice.find({ patientId: patient._id })
+      LabTest.find({ patientId: patient._id })
     ]);
 
     logAudit(req, 'patient.export', 'Patient', patient._id);
@@ -66,8 +64,7 @@ router.get('/:id/export', auth, requireRole('admin', 'clinic', 'hospital'), asyn
       attachments,
       referrals,
       appointments,
-      labTests,
-      invoices
+      labTests
     });
   } catch (error) {
     res.status(500).json({ error: 'Failed to export patient data' });
@@ -89,8 +86,7 @@ router.delete('/:id', auth, requireRole('admin'), async (req, res) => {
       Attachment.deleteMany({ patientId: patient._id }),
       Referral.deleteMany({ patientId: patient._id }),
       Appointment.deleteMany({ patientId: patient._id }),
-      LabTest.deleteMany({ patientId: patient._id }),
-      Invoice.deleteMany({ patientId: patient._id })
+      LabTest.deleteMany({ patientId: patient._id })
     ]);
     await patient.deleteOne();
 

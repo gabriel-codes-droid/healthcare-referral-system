@@ -160,20 +160,6 @@ export const api = {
 
   getStats: () => request<import('../Types').DashboardStats>('/hospitals/stats'),
 
-  getInvoices: () => request<import('../Types').Invoice[]>('/billing'),
-
-  getBillingSummary: () =>
-    request<{ collected: number; outstanding: number; count: number }>('/billing/summary'),
-
-  createInvoice: (data: Record<string, unknown>) =>
-    request<import('../Types').Invoice>('/billing', { method: 'POST', body: JSON.stringify(data) }),
-
-  updateInvoiceStatus: (id: string, status: string) =>
-    request<import('../Types').Invoice>(`/billing/${id}/status`, {
-      method: 'PATCH',
-      body: JSON.stringify({ status })
-    }),
-
   sendVerificationCode: (email: string) =>
     request<{ success: boolean; message: string }>('/auth/send-verification-code', {
       method: 'POST',

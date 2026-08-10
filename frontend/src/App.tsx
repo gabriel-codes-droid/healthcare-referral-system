@@ -11,12 +11,12 @@ import PatientRecord from './Pages/PatientRecord';
 import Referrals from './Pages/Referrals';
 import Appointments from './Pages/Appointments';
 import Laboratories from './Pages/Laboratories';
-import Billing from './Pages/Billing';
 import AuditLogs from './Pages/AuditLogs';
 import Doctors from './Pages/Doctors';
 import Hospitals from './Pages/Hospitals';
 import Settings from './Pages/Settings';
 import PlaceholderPage from './Pages/PlaceholderPage';
+import Reports from './Pages/Reports';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -73,11 +73,10 @@ function AppRoutes() {
         <Route path="doctors" element={<RoleRoute roles={['admin', 'clinic', 'hospital']}><Doctors /></RoleRoute>} />
         <Route path="hospitals" element={<RoleRoute roles={['admin', 'clinic', 'hospital']}><Hospitals /></RoleRoute>} />
         <Route path="laboratories" element={<Laboratories />} />
-        <Route path="billing" element={<Billing />} />
         <Route path="audit-logs" element={<RoleRoute roles={['admin']}><AuditLogs /></RoleRoute>} />
         <Route
           path="reports"
-          element={<PlaceholderPage title="Reports" description="Analytics and reporting coming soon." />}
+          element={<Reports />}
         />
         <Route
           path="settings"
