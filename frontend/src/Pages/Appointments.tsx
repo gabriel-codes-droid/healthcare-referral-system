@@ -68,8 +68,38 @@ export default function Appointments() {
     setError('');
   };
 
+  const validateAppointment = (formData: FormData): string | null => {
+    const type = (formData.get('type') as string)?.trim().toLowerCase();
+    const validTypes = ['consultation', 'follow-up', 'procedure'];
+    if (!type || !validTypes.includes(type)) {
+      return 'Type must be one of: consultation, follow-up, procedure';
+    }
+
+    if (!selectedDate) {
+      return 'Please select a date';
+    }
+
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    if (!dateRegex.test(selectedDate)) {
+      return 'Date format is invalid';
+    }
+
+    if (!selectedTime) {
+      return 'Please select a time slot';
+    }
+
+    return null;
+  };
+
   const handleCreate = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
+    const validationError = validateAppointment(new FormData(e.currentTarget));
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
+
     if (!selectedTime) {
       setError('Pick an available time slot');
       return;
@@ -99,7 +129,7 @@ export default function Appointments() {
     <>
       <div className="page-header">
         <div>
-          <Link to="/" className="back-link-header">
+          <Link to="/" className="back-link-header" style={{ fontWeight: 500, fontSize: '0.9rem' }}>
             <ArrowLeft size={16} /> Back to Dashboard
           </Link>
           <h1>Appointments</h1>
@@ -224,6 +254,9 @@ export default function Appointments() {
             )}
           </label>
           {error && <p className="form-error full-width">{error}</p>}
+          <button type="button" className="btn-secondary full-width" onClick={() => { setModalOpen(false); resetForm(); }}>
+            Cancel
+          </button>
           <button type="submit" className="btn-primary full-width" disabled={saving}>
             Schedule
           </button>

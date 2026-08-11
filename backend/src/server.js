@@ -16,18 +16,31 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // CORS configuration
-const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:5173', 'http://localhost:3000'];
+const isProd = process.env.NODE_ENV === 'production';
+const allowedOrigins = isProd
+  ? (process.env.ALLOWED_ORIGINS || '').split(',').map(s => s.trim()).filter(Boolean)
+  : []; // dev: allow any localhost origin
 
 app.use(cors({
   origin: (origin, callback) => {
-    // Allow requests with no origin (like mobile apps or curl requests)
+    // Allow requests with no origin (mobile apps, curl, server-to-server)
     if (!origin) return callback(null, true);
-    
-    if (allowedOrigins.indexOf(origin) !== -1) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
+
+    if (isProd) {
+      if (allowedOrigins.includes(origin) || allowedOrigins.includes('*')) {
+        return callback(null, true);
+      }
+      return callback(new Error('Not allowed by CORS'));
     }
+
+    // Dev mode: accept any localhost / 127.0.0.1 origin (any port)
+    const isLocal = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
+    if (isLocal) return callback(null, true);
+
+    // Also allow file:// and Vite preview origins in dev
+    if (origin === 'null' || origin.startsWith('http://localhost')) return callback(null, true);
+
+    return callback(new Error('Not allowed by CORS'));
   },
   credentials: true
 }));

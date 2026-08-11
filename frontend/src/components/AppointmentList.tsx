@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import type { Appointment } from '../Types';
 
 type Props = {
@@ -9,7 +10,7 @@ export default function AppointmentList({ appointments }: Props) {
     <section className="panel appointment-panel">
       <div className="panel-header">
         <h2>Upcoming Appointments</h2>
-        <button type="button">View all</button>
+        <Link to="/appointments" className="back-link" style={{marginBottom:0}}>View all</Link>
       </div>
       <div className="appointment-list">
         {appointments.length === 0 ? (

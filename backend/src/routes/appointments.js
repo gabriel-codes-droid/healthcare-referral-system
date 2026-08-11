@@ -122,7 +122,8 @@ router.patch('/:id/status', auth, requireRole('admin', 'hospital', 'clinic'), as
     await appointment.save();
     res.json(appointment);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to update appointment' });
+    console.error('Update status error:', error);
+    res.status(500).json({ error: error.message || 'Failed to update appointment' });
   }
 });
 

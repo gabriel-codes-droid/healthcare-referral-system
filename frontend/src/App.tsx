@@ -15,7 +15,6 @@ import AuditLogs from './Pages/AuditLogs';
 import Doctors from './Pages/Doctors';
 import Hospitals from './Pages/Hospitals';
 import Settings from './Pages/Settings';
-import PlaceholderPage from './Pages/PlaceholderPage';
 import Reports from './Pages/Reports';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
