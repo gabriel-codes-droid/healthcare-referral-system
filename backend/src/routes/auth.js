@@ -126,7 +126,12 @@ router.post('/send-verification-code', async (req, res) => {
     res.json({ success: true, message: 'Verification code sent' });
   } catch (error) {
     console.error('Send verification code error:', error);
-    res.status(500).json({ error: 'Failed to send verification code' });
+    console.error('Send verification code error:', error);
+    res.status(500).json({ 
+      error: 'Failed to send verification code', 
+      details: error.message,
+      hint: 'Resend may reject test emails like example.com. Try a real email address.'
+    });
   }
 });
 
