@@ -11,7 +11,7 @@ export default function Layout() {
     <div className="app-shell">
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       <div className="main-area">
-        <Topbar onMenuToggle={() => setSidebarOpen(!sidebarOpen)} />
+        <Topbar onMenuToggle={() => setSidebarOpen(true)} />
         <OfflineBanner />
         <main className="page-content">
           <Outlet />

@@ -43,7 +43,7 @@ export default function Sidebar({ isOpen = false, onClose }: Props) {
 
   return (
     <>
-      <aside className={`sidebar ${isOpen ? 'mobile-open' : ''}`}>
+      <aside className={`sidebar ${isOpen ? 'open' : ''}`}>
         <div className="brand">
           <span className="brand-mark">
             <Activity size={20} />

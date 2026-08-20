@@ -60,6 +60,11 @@ export default function Login() {
           </div>
         </div>
 
+        <div className="healthcare-header">
+          <h2>Sign In</h2>
+          <p>Access your healthcare dashboard</p>
+        </div>
+
         <form onSubmit={handleSubmit} className="login-form">
           <label>
             Email
