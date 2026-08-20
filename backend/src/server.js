@@ -13,7 +13,7 @@ const messageRoutes = require('./routes/messages');
 const auditLogRoutes = require('./routes/auditLogs');
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5080;
 
 // CORS configuration
 const isProd = process.env.NODE_ENV === 'production';
