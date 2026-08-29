@@ -48,6 +48,11 @@ export default function Register() {
           </div>
         </div>
 
+        <div className="healthcare-header">
+          <h2>Sign Up</h2>
+          <p>Register your healthcare organization</p>
+        </div>
+
         <form onSubmit={handleSubmit} className="login-form">
           <label>
             Full Name

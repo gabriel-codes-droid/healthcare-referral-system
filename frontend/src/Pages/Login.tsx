@@ -4,18 +4,11 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 
-const demoAccounts = [
-  { role: 'Admin', email: 'admin@sympra.com', password: 'admin123' },
-  { role: 'Clinic Doctor', email: 'clinic@sympra.com', password: 'clinic123' },
-  { role: 'Hospital', email: 'hospital@sympra.com', password: 'hospital123' },
-  { role: 'Laboratory', email: 'lab@sympra.com', password: 'lab123' }
-];
-
 export default function Login() {
   const { login } = useAuth();
   const { theme, toggleTheme } = useTheme();
-  const [email, setEmail] = useState('admin@sympra.com');
-  const [password, setPassword] = useState('admin123');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -26,20 +19,6 @@ export default function Login() {
     setLoading(true);
     try {
       await login(email, password);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Login failed');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const quickLogin = async (accountEmail: string, accountPassword: string) => {
-    setEmail(accountEmail);
-    setPassword(accountPassword);
-    setError('');
-    setLoading(true);
-    try {
-      await login(accountEmail, accountPassword);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed');
     } finally {
@@ -95,23 +74,6 @@ export default function Login() {
             {loading ? <Loader2 className="spin" size={18} /> : 'Sign In'}
           </button>
         </form>
-
-        <div className="demo-accounts">
-          <p>Quick login as:</p>
-          <div className="demo-grid">
-            {demoAccounts.map((account) => (
-              <button
-                key={account.email}
-                type="button"
-                className="demo-btn"
-                onClick={() => quickLogin(account.email, account.password)}
-                disabled={loading}
-              >
-                {account.role}
-              </button>
-            ))}
-          </div>
-        </div>
 
         <div className="auth-switch">
           <p>Don't have an account?</p>
