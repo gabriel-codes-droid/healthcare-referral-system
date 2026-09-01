@@ -8,7 +8,7 @@ import { getFirestore, type Firestore } from 'firebase/firestore';
  * override the checked-in defaults for another Firebase project.
  */
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || 'AIzaSyBNXwhE3pKmz0BJAByhPIbsPSJCfTMwBE',
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || 'AIzaSyBNXwhmE3pKmz0BJAByhPIbsPSJCfTMwBE',
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || 'healthcare-referral-syst-8e790.firebaseapp.com',
   projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || 'healthcare-referral-syst-8e790',
   messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || '873535945217',
