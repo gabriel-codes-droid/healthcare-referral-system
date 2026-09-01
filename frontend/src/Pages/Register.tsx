@@ -50,7 +50,7 @@ export default function Register() {
 
         <div className="healthcare-header">
           <h2>Sign Up</h2>
-          <p>Register your healthcare organization</p>
+            <p>Register your healthcare organization. Administrator access is granted separately.</p>
         </div>
 
         <form onSubmit={handleSubmit} className="login-form">
@@ -102,7 +102,6 @@ export default function Register() {
               <option value="clinic">Clinic Doctor</option>
               <option value="hospital">Hospital</option>
               <option value="lab">Laboratory</option>
-              <option value="admin">Admin</option>
             </select>
           </label>
           <label>

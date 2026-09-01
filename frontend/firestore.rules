@@ -1,0 +1,133 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function myProfile() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function roleIs(role) {
+      return signedIn() && myProfile().role == role;
+    }
+
+    function roleIn(roles) {
+      return signedIn() && myProfile().role in roles;
+    }
+
+    function isAdmin() {
+      return roleIs('admin');
+    }
+
+    function referralParty(referral) {
+      return isAdmin()
+        || (roleIs('clinic') && referral.fromOrganization == myProfile().organization)
+        || (roleIs('hospital') && referral.toOrganization == myProfile().organization);
+    }
+
+    function patientDataUser() {
+      return roleIn(['admin', 'clinic', 'hospital', 'lab']);
+    }
+
+    match /users/{uid} {
+      allow read: if signedIn() && (request.auth.uid == uid || isAdmin());
+      allow create: if signedIn()
+        && request.auth.uid == uid
+        && request.resource.data.role in ['patient', 'clinic', 'hospital', 'lab'];
+      allow update: if isAdmin()
+        || (signedIn()
+          && request.auth.uid == uid
+          && request.resource.data.role == resource.data.role
+          && request.resource.data.organization == resource.data.organization);
+      allow delete: if isAdmin() || (signedIn() && request.auth.uid == uid);
+    }
+
+    match /patients/{patientId} {
+      allow read: if patientDataUser();
+      allow create: if roleIn(['admin', 'clinic', 'hospital']);
+      allow update: if roleIn(['admin', 'clinic', 'hospital']);
+      allow delete: if isAdmin();
+    }
+
+    match /visits/{visitId} {
+      allow read: if patientDataUser();
+      allow create, update: if roleIn(['admin', 'clinic', 'hospital']);
+      allow delete: if isAdmin();
+    }
+
+    match /prescriptions/{prescriptionId} {
+      allow read: if patientDataUser();
+      allow create, update: if roleIn(['admin', 'clinic', 'hospital']);
+      allow delete: if isAdmin();
+    }
+
+    match /attachments/{attachmentId} {
+      allow read: if patientDataUser();
+      allow create: if roleIn(['admin', 'clinic', 'hospital', 'lab'])
+        && request.resource.data.uploadedById == request.auth.uid;
+      allow update: if roleIn(['admin', 'clinic', 'hospital', 'lab']);
+      allow delete: if roleIn(['admin', 'clinic', 'hospital', 'lab']);
+    }
+
+    match /referrals/{referralId} {
+      allow read: if signedIn() && referralParty(resource.data);
+      allow create: if roleIn(['admin', 'clinic', 'hospital'])
+        && request.resource.data.fromOrganization == myProfile().organization;
+      allow update: if signedIn() && referralParty(resource.data)
+        && (isAdmin() || request.resource.data.fromOrganization == resource.data.fromOrganization);
+      allow delete: if isAdmin();
+    }
+
+    match /messages/{messageId} {
+      allow read: if signedIn()
+        && exists(/databases/$(database)/documents/referrals/$(resource.data.referralId))
+        && referralParty(get(/databases/$(database)/documents/referrals/$(resource.data.referralId)).data);
+      allow create: if signedIn()
+        && request.resource.data.senderId == request.auth.uid
+        && exists(/databases/$(database)/documents/referrals/$(request.resource.data.referralId))
+        && referralParty(get(/databases/$(database)/documents/referrals/$(request.resource.data.referralId)).data);
+      allow update, delete: if isAdmin();
+    }
+
+    match /appointments/{appointmentId} {
+      allow read: if roleIn(['admin', 'clinic', 'hospital'])
+        && (isAdmin() || !roleIs('hospital') || resource.data.hospitalName == myProfile().organization);
+      allow create, update: if roleIn(['admin', 'clinic', 'hospital']);
+      allow delete: if isAdmin();
+    }
+
+    match /labTests/{labTestId} {
+      allow read: if roleIn(['admin', 'clinic', 'hospital', 'lab'])
+        && (isAdmin()
+          || (roleIs('lab') && resource.data.labName == myProfile().organization)
+          || ((roleIs('clinic') || roleIs('hospital')) && resource.data.requestedByOrg == myProfile().organization));
+      allow create, update: if roleIn(['admin', 'clinic', 'hospital', 'lab']);
+      allow delete: if isAdmin();
+    }
+
+    match /labResults/{resultId} {
+      allow read: if roleIn(['admin', 'clinic', 'hospital', 'lab']);
+      allow create, update: if roleIn(['admin', 'lab']);
+      allow delete: if isAdmin();
+    }
+
+    match /hospitals/{hospitalId} {
+      allow read: if signedIn();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /doctors/{doctorId} {
+      allow read: if roleIn(['admin', 'clinic', 'hospital']);
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /auditLogs/{logId} {
+      allow read: if isAdmin();
+      allow create: if signedIn() && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if isAdmin();
+    }
+  }
+}

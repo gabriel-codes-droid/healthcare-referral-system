@@ -1,13 +1,13 @@
 import React, { useRef, useState } from 'react';
-import { User, Lock, LogOut, Camera, Mail, Shield, Check, Eye, EyeOff } from 'lucide-react';
+import { User, Lock, LogOut, Camera, Mail, Shield, Check } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
 import Modal from '../components/Modal';
 
-type PasswordResetStep = 'request' | 'verify' | 'reset' | 'success';
+type PasswordResetStep = 'request' | 'success';
 
 export default function Settings() {
-  const { user, logout } = useAuth();
+  const { user, logout, refreshUser } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [activeTab, setActiveTab] = useState<'profile' | 'security'>('profile');
   const [profileModal, setProfileModal] = useState(false);
@@ -23,20 +23,14 @@ export default function Settings() {
   // Password reset state
   const [resetStep, setResetStep] = useState<PasswordResetStep>('request');
   const [resetEmail, setResetEmail] = useState('');
-  const [verificationCode, setVerificationCode] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
   const [passwordSaving, setPasswordSaving] = useState(false);
   const [passwordError, setPasswordError] = useState('');
-  const [, setGeneratedCode] = useState('');
-  const [showNewPassword, setShowNewPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        alert('File size must be less than 5MB');
+      if (file.size > 150 * 1024) {
+        alert('File size must be less than 150KB when Firebase Storage is disabled');
         return;
       }
       if (!file.type.startsWith('image/')) {
@@ -67,6 +61,7 @@ export default function Settings() {
       }
       
       await api.updateProfile(updateData);
+      await refreshUser();
       setProfileModal(false);
       setAvatarPreview(null);
     } catch (err) {
@@ -80,59 +75,16 @@ export default function Settings() {
     e.preventDefault();
     setPasswordSaving(true);
     setPasswordError('');
-    
     try {
-      await api.sendVerificationCode(resetEmail);
-      setResetStep('verify');
-    } catch (err) {
-      setPasswordError(err instanceof Error ? err.message : 'Failed to send verification code');
-    } finally {
-      setPasswordSaving(false);
-    }
-  };
-
-  const handleCodeVerification = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setPasswordSaving(true);
-    setPasswordError('');
-    
-    try {
-      await api.verifyCode(resetEmail, verificationCode);
-      setResetStep('reset');
-    } catch (err) {
-      setPasswordError(err instanceof Error ? err.message : 'Verification failed');
-    } finally {
-      setPasswordSaving(false);
-    }
-  };
-
-  const handlePasswordReset = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setPasswordSaving(true);
-    setPasswordError('');
-    
-    try {
-      if (newPassword !== confirmPassword) {
-        throw new Error('Passwords do not match');
-      }
-      if (newPassword.length < 8) {
-        throw new Error('Password must be at least 8 characters');
-      }
-      
-      await api.resetPassword(resetEmail, verificationCode, newPassword);
+      await api.resetPassword(resetEmail);
       setResetStep('success');
-      
-      // Reset form after 2 seconds
       setTimeout(() => {
         setPasswordModal(false);
         setResetStep('request');
-        setVerificationCode('');
-        setNewPassword('');
-        setConfirmPassword('');
         setResetEmail('');
-      }, 2000);
+      }, 2500);
     } catch (err) {
-      setPasswordError(err instanceof Error ? err.message : 'Failed to reset password');
+      setPasswordError(err instanceof Error ? err.message : 'Failed to send password reset email');
     } finally {
       setPasswordSaving(false);
     }
@@ -243,7 +195,7 @@ export default function Settings() {
                 <Lock size={24} />
                 <h2>Password & Security</h2>
               </div>
-              <p>Change your password securely with email verification</p>
+              <p>Change your password securely with a Firebase reset link</p>
               <button
                 type="button"
                 className="btn-primary"
@@ -290,10 +242,8 @@ export default function Settings() {
         onClose={() => {
           setPasswordModal(false);
           setResetStep('request');
-          setVerificationCode('');
-          setNewPassword('');
-          setConfirmPassword('');
-          setGeneratedCode('');
+          setResetEmail('');
+          setPasswordError('');
         }}
       >
         {resetStep === 'request' && (
@@ -310,110 +260,21 @@ export default function Settings() {
               />
             </label>
             <p className="form-hint full-width">
-              A verification code will be sent to your email address
+              Firebase will send a secure, time-limited password reset link to this address.
             </p>
             {passwordError && <p className="form-error full-width">{passwordError}</p>}
             <button type="submit" className="btn-primary full-width" disabled={passwordSaving}>
-              {passwordSaving ? 'Sending...' : 'Send Verification Code'}
+              {passwordSaving ? 'Sending...' : 'Send Reset Link'}
             </button>
           </form>
         )}
 
-        {resetStep === 'verify' && (
-          <form className="form-grid" onSubmit={handleCodeVerification}>
-            <label className="full-width">
-              Verification Code *
-              <input
-                name="code"
-                value={verificationCode}
-                onChange={(e) => setVerificationCode(e.target.value.toUpperCase())}
-                placeholder="Enter 6-digit code"
-                maxLength={6}
-                required
-              />
-            </label>
-            <p className="form-hint full-width">
-              Enter the code sent to {resetEmail}
-            </p>
-            {passwordError && <p className="form-error full-width">{passwordError}</p>}
-            <button type="submit" className="btn-primary full-width" disabled={passwordSaving}>
-              {passwordSaving ? 'Verifying...' : 'Verify Code'}
-            </button>
-            <button
-              type="button"
-              className="btn-secondary full-width"
-              onClick={() => setResetStep('request')}
-            >
-              Back
-            </button>
-          </form>
-        )}
-
-        {resetStep === 'reset' && (
-          <form className="form-grid" onSubmit={handlePasswordReset}>
-            <label className="full-width">
-              New Password *
-              <div className="password-input-wrap">
-                <input
-                  name="newPassword"
-                  type={showNewPassword ? 'text' : 'password'}
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  placeholder="At least 8 characters"
-                  required
-                />
-                <button
-                  type="button"
-                  className="password-toggle"
-                  onClick={() => setShowNewPassword((prev) => !prev)}
-                  aria-label={showNewPassword ? 'Hide password' : 'Show password'}
-                  tabIndex={-1}
-                >
-                  {showNewPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                </button>
-              </div>
-            </label>
-            <label className="full-width">
-              Confirm Password *
-              <div className="password-input-wrap">
-                <input
-                  name="confirmPassword"
-                  type={showConfirmPassword ? 'text' : 'password'}
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="Re-enter new password"
-                  required
-                />
-                <button
-                  type="button"
-                  className="password-toggle"
-                  onClick={() => setShowConfirmPassword((prev) => !prev)}
-                  aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
-                  tabIndex={-1}
-                >
-                  {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                </button>
-              </div>
-            </label>
-            {passwordError && <p className="form-error full-width">{passwordError}</p>}
-            <button type="submit" className="btn-primary full-width" disabled={passwordSaving}>
-              {passwordSaving ? 'Resetting...' : 'Reset Password'}
-            </button>
-            <button
-              type="button"
-              className="btn-secondary full-width"
-              onClick={() => setResetStep('request')}
-            >
-              Cancel
-            </button>
-          </form>
-        )}
 
         {resetStep === 'success' && (
           <div className="success-message">
             <Check size={48} />
-            <h3>Password Reset Successful</h3>
-            <p>Your password has been changed successfully</p>
+            <h3>Reset Link Sent</h3>
+            <p>Check your email and follow the Firebase reset link to choose a new password.</p>
           </div>
         )}
       </Modal>

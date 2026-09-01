@@ -27,7 +27,7 @@ export default function AuditLogs() {
       <section className="panel" style={{ padding: '1rem', marginBottom: '1rem', display: 'flex', gap: '0.6rem', alignItems: 'center' }}>
         <ShieldCheck size={18} />
         <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-          Data is encrypted at rest (MongoDB Atlas) and in transit (TLS). This log shows the most recent 100 events.
+          Data is protected by Firebase security rules and encrypted in transit. This log shows the most recent 100 events.
         </span>
       </section>
 

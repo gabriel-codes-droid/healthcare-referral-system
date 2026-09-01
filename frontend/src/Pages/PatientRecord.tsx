@@ -108,8 +108,8 @@ export default function PatientRecord() {
       setError('Choose a file to upload');
       return;
     }
-    if (file.size > 5 * 1024 * 1024) {
-      setError('File exceeds the 5MB limit');
+    if (file.size > 650 * 1024) {
+      setError('File exceeds the 650KB Firestore-only limit');
       return;
     }
     setSaving(true);

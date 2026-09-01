@@ -1,186 +1,63 @@
-# Healthcare Referral System - Deployment Guide
+# Sympra Firestore-Only Deployment Guide
 
-This guide will help you deploy the Healthcare Referral System to production using Vercel (frontend) and Render (backend).
+This project deploys as a Firebase application without Firebase Storage. Firebase Authentication and Cloud Firestore provide the runtime services, while Firebase Hosting serves the Vite frontend. The legacy Express/MongoDB backend is not required and must not be deployed.
 
 ## Prerequisites
 
-- GitHub repository with the code
-- MongoDB Atlas account (free tier available)
-- Email service account (Gmail or SendGrid) for verification codes
-- Vercel account (free tier available)
-- Render account (free tier available)
+Install Node.js 20 or newer and the Firebase CLI, then authenticate the CLI with an account that has access to the configured Firebase project.
 
-## Backend Deployment (Render)
-
-### 1. Deploy MongoDB Atlas
-
-1. Go to [MongoDB Atlas](https://www.mongodb.com/cloud/atlas)
-2. Create a free account and cluster
-3. Click "Connect" → "Connect your application"
-4. Copy the connection string
-5. Replace `<password>` with your database password
-
-### 2. Deploy Backend to Render
-
-1. Go to [Render](https://render.com)
-2. Click "New" → "Web Service"
-3. Connect your GitHub repository
-4. Configure the service:
-   - **Name**: healthcare-referral-api
-   - **Branch**: main
-   - **Runtime**: Node
-   - **Build Command**: `npm install`
-   - **Start Command**: `npm start`
-   - **Root Directory**: `backend`
-
-5. Add Environment Variables:
-   ```
-   MONGODB_URI=mongodb+srv://your-connection-string
-   JWT_SECRET=generate-a-strong-secret-key
-   PORT=10000
-   ALLOWED_ORIGINS=https://your-frontend.vercel.app
-   EMAIL_SERVICE=gmail
-   EMAIL_USER=your-email@gmail.com
-   EMAIL_PASSWORD=your-app-password
-   EMAIL_FROM=noreply@healthcare-referral.com
-   ```
-
-6. Click "Deploy Web Service"
-7. Wait for deployment to complete
-8. Copy the deployed URL (e.g., `https://healthcare-referral-api.onrender.com`)
-
-### 3. Email Service Setup
-
-**Option A: Gmail**
-1. Enable 2-factor authentication on your Google account
-2. Go to Google Account → Security → App Passwords
-3. Generate an app password for "Mail"
-4. Use the app password as `EMAIL_PASSWORD`
-
-**Option B: SendGrid**
-1. Create a SendGrid account
-2. Generate an API key
-3. Set `EMAIL_SERVICE=sendgrid` and use the API key as `SENDGRID_API_KEY`
-
-## Frontend Deployment (Vercel)
-
-### 1. Deploy Frontend to Vercel
-
-1. Go to [Vercel](https://vercel.com)
-2. Click "Add New" → "Project"
-3. Import your GitHub repository
-4. Configure the project:
-   - **Framework Preset**: Vite
-   - **Root Directory**: `frontend`
-   - **Build Command**: `npm run build`
-   - **Output Directory**: `dist`
-
-5. Add Environment Variable:
-   ```
-   VITE_API_URL=https://your-backend-url.onrender.com
-   ```
-
-6. Click "Deploy"
-7. Wait for deployment to complete
-8. Copy the deployed URL (e.g., `https://healthcare-referral.vercel.app`)
-
-### 2. Update Backend CORS
-
-Go back to Render and update the `ALLOWED_ORIGINS` environment variable to include your Vercel frontend URL:
-```
-ALLOWED_ORIGINS=https://your-frontend.vercel.app
+```bash
+npm install -g firebase-tools
+firebase login
+cd frontend
+firebase use healthcare-referral-syst-8e790
+npm install
 ```
 
-## Post-Deployment Setup
+## Firebase console setup
 
-### 1. Create First User
+Enable **Authentication → Sign-in method → Email/Password** and create the Cloud Firestore database. No Firebase Storage bucket or paid Storage setup is required.
 
-Since we removed default test users, you'll need to create your first account:
+The web configuration in `frontend/src/firebase/config.ts` is populated for the active Firebase web app. For a different project, copy `frontend/.env.example` to `frontend/.env.local` and provide all `VITE_FIREBASE_*` values. Do not use service-account JSON or private keys in frontend environment variables.
 
-1. Navigate to your deployed frontend
-2. Click "Sign Up"
-3. Fill in your details
-4. Choose your role (admin recommended for first user)
+## Deploy
 
-### 2. Verify Email Functionality
+From the `frontend` directory:
 
-1. Test the password reset feature
-2. Check that verification codes are sent to your email
-3. If emails aren't working, check the Render logs
+```bash
+npm run build
+firebase deploy --only hosting,firestore:rules
+```
 
-### 3. Monitor Deployments
+The command publishes the compiled `dist` directory and `firestore.rules`. The Hosting rewrite sends all application routes to `index.html`, preserving React Router navigation after refresh.
 
-- **Render**: Check logs and deployment status in Render dashboard
-- **Vercel**: Monitor deployments and performance in Vercel dashboard
-- **MongoDB**: Monitor database usage in MongoDB Atlas
+## Firestore-only attachment policy
+
+The app stores small attachment files as base64 data in the corresponding Firestore document. Patient attachments are limited to 650 KB and profile avatars to 150 KB. Larger files are rejected because Firebase Storage is intentionally disabled. This keeps the application on Firestore and avoids the paid Storage dependency, at the cost of lower attachment capacity.
+
+## Administrator bootstrap
+
+Public registration deliberately does not offer the administrator role. Register the first account through the application, copy its Firebase Auth UID, and set the matching Firestore document `users/{uid}.role` to `admin` through an approved administrative process. Keep the organization name accurate because referral and laboratory rules use it for organization scoping.
+
+## Verification checklist
+
+After deployment, open the Hosting URL and verify registration, login, password-reset email, patient creation, referral creation, small attachment upload/download, and logout. The browser console should not show Firebase initialization or permission errors.
+
+## Operational rules
+
+Do not deploy `backend/` to Render, do not configure MongoDB Atlas for the application, and do not add `VITE_API_URL`; the frontend no longer calls an Express API. Do not replace the published rules with `allow read, write: if true` rules. Healthcare records and inline attachments must remain behind authenticated Firestore access.
 
 ## Troubleshooting
 
-### Backend Issues
+| Symptom | Check |
+|---|---|
+| `auth/operation-not-allowed` | Enable Email/Password under Firebase Authentication sign-in providers. |
+| `permission-denied` after login | Confirm the signed-in user has a `users/{uid}` profile and a supported `role`; publish the rules again. |
+| Attachment upload fails | Confirm the file is under 650 KB and the user role is allowed. |
+| Password reset email does not arrive | Check Firebase Authentication email templates, authorized domains, spam filtering, and the recipient address. |
+| Blank page after refresh | Confirm the Hosting rewrite is deployed and the URL is the Firebase Hosting domain. |
+| Build fails in PowerShell | Run `npm install` in `frontend` and then `npm run build`; the build script invokes local binary shims directly. |
 
-- **Connection refused**: Check MongoDB connection string and network access
-- **CORS errors**: Verify `ALLOWED_ORIGINS` includes your frontend URL
-- **Email not sending**: Check email credentials and service configuration
+## Historical data migration
 
-### Frontend Issues
-
-- **API errors**: Verify `VITE_API_URL` is correct
-- **Build failures**: Check Vercel build logs for dependency issues
-- **Blank page**: Check browser console for JavaScript errors
-
-### Database Issues
-
-- **Connection timeout**: Check MongoDB Atlas IP whitelist
-- **Authentication failed**: Verify database user credentials
-- **Performance issues**: Consider upgrading MongoDB tier for production
-
-## Security Best Practices
-
-1. **Environment Variables**: Never commit `.env` files to git
-2. **Strong Passwords**: Use strong JWT secrets and database passwords
-3. **HTTPS**: Both Vercel and Render provide HTTPS by default
-4. **Rate Limiting**: Consider adding rate limiting for API endpoints
-5. **Input Validation**: All inputs are validated on both frontend and backend
-6. **Password Hashing**: All passwords are hashed using bcrypt
-
-## Scaling Considerations
-
-### Free Tier Limitations
-
-- **Render Free Tier**: Spins down after 15 minutes of inactivity (cold starts)
-- **MongoDB Free Tier**: 512 MB storage, shared RAM
-- **Vercel Free Tier**: 100 GB bandwidth/month
-
-### Production Recommendations
-
-- **Backend**: Upgrade to paid Render tier for consistent performance
-- **Database**: Upgrade MongoDB Atlas for production workloads
-- **Email**: Use dedicated email service for high volume
-- **Monitoring**: Add application monitoring (Sentry, LogRocket)
-- **CDN**: Consider CDN for static assets
-
-## Maintenance
-
-### Regular Tasks
-
-- Monitor database storage usage
-- Check email service quota
-- Review application logs
-- Update dependencies regularly
-- Backup database regularly
-
-### Updates
-
-To update the application:
-1. Push changes to GitHub main branch
-2. Render and Vercel will auto-deploy
-3. Monitor deployment logs for issues
-4. Test critical functionality after deployment
-
-## Support
-
-For issues with:
-- **Render**: https://render.com/docs
-- **Vercel**: https://vercel.com/docs
-- **MongoDB Atlas**: https://docs.atlas.mongodb.com
-- **Email Services**: Check respective provider documentation
+The codebase no longer reads MongoDB or the Express API. If historical data must be retained, export it from the legacy database, transform it into the Firestore collection shapes documented in `frontend/src/firebase/firestore.ts`, and import it with a one-time trusted migration script using Firebase Admin SDK credentials kept outside the repository. Never run that import from the browser.
