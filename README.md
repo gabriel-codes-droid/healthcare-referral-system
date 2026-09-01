@@ -12,7 +12,7 @@ Sympra is a healthcare referral workspace for clinics, hospitals, laboratories, 
 | Access control | Firestore Security Rules | `frontend/firestore.rules` |
 | Web delivery | Firebase Hosting with SPA fallback | `frontend/firebase.json` |
 
-The old Express/MongoDB service under `backend/` is no longer part of the application runtime or deployment path. It is retained only as historical migration reference material and must not be started for production use.
+The old Express/MongoDB service under `backend/` has been removed from this repository and is not part of the application runtime or deployment path. If a Render service still appears in your Render dashboard, it is an external account resource; delete or suspend it there because repository changes cannot remove an already-created Render service.
 
 ## Local development
 

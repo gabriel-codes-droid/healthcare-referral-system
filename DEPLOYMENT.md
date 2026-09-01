@@ -1,6 +1,6 @@
 # Sympra Firestore-Only Deployment Guide
 
-This project deploys as a Firebase application without Firebase Storage. Firebase Authentication and Cloud Firestore provide the runtime services, while Firebase Hosting serves the Vite frontend. The legacy Express/MongoDB backend is not required and must not be deployed.
+This project deploys as a Firebase application without Firebase Storage. Firebase Authentication and Cloud Firestore provide the runtime services, while Firebase Hosting serves the Vite frontend. The legacy Express/MongoDB backend has been removed from the repository and is not required. If an old Render service remains visible in your Render dashboard, delete or suspend that external service manually; deploying Firebase cannot remove resources already created in Render.
 
 ## Prerequisites
 
