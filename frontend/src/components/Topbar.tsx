@@ -79,7 +79,7 @@ export default function Topbar({ onMenuToggle }: Props) {
         */}
         <div className="profile">
           <img 
-            src={user?.avatar || `https://ui-avatars.com{encodeURIComponent(user?.name || 'User')}&background=0D8ABC&color=fff`} 
+            src={user?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'User')}&background=0D8ABC&color=fff`} 
             alt={user?.name || "User profile"} 
           />
           <div>
