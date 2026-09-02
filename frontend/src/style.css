@@ -78,6 +78,11 @@ body {
   overflow: hidden;
 }
 
+#root {
+  height: 100%;
+  min-height: 0;
+}
+
 h1, h2, h3, strong {
   color: var(--text-h);
   margin: 0;
@@ -100,6 +105,7 @@ a { color: inherit; text-decoration: none; }
 .app-shell {
   display: flex;
   height: 100vh;
+  min-height: 0;
 }
 
 .main-area {
@@ -107,12 +113,17 @@ a { color: inherit; text-decoration: none; }
   display: flex;
   flex-direction: column;
   min-width: 0;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .page-content {
-  flex: 1;
+  flex: 1 1 auto;
+  min-height: 0;
   padding: 1.5rem 1.75rem 2rem;
   overflow-y: auto;
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* Sidebar */
