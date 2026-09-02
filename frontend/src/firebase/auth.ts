@@ -107,7 +107,15 @@ export async function updateUserProfile(data: { name?: string; email?: string; a
 
   const updates: Record<string, unknown> = {};
   const avatarUrl = data.avatar;
-  if (avatarUrl?.startsWith('data:') && avatarUrl.length > 200 * 1024) {
+  // Base64 encoding inflates size by ~33% (3 raw bytes -> 4 base64 chars),
+  // plus a "data:image/...;base64," prefix. This check operates on the
+  // encoded string, so its threshold must account for that overhead -
+  // otherwise a file that passed the raw-size check upstream (e.g. in
+  // Settings.tsx) can still be rejected here even though it's under the
+  // real 150 KB limit.
+  const MAX_AVATAR_RAW_BYTES = 150 * 1024;
+  const MAX_AVATAR_ENCODED_LENGTH = Math.ceil((MAX_AVATAR_RAW_BYTES * 4) / 3) + 100; // +100 for the data-URL prefix
+  if (avatarUrl?.startsWith('data:') && avatarUrl.length > MAX_AVATAR_ENCODED_LENGTH) {
     throw new Error('Avatar images must be smaller than 150 KB when Storage is disabled.');
   }
 
