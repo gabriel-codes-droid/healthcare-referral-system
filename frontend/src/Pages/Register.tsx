@@ -1,4 +1,4 @@
-import { Activity, Loader2, ArrowLeft, Eye, EyeOff } from 'lucide-react';
+import { Activity, ArrowLeft, ClipboardPlus, Eye, EyeOff, HeartPulse, Loader2, Plus } from 'lucide-react';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -32,99 +32,114 @@ export default function Register() {
   };
 
   return (
-    <div className="login-page single-column">
-      <div className="login-card">
-        <Link to="/login" className="back-link">
-          <ArrowLeft size={16} /> Back to Login
-        </Link>
+    <div className="login-page">
+      <div className="login-illustration-panel" aria-hidden="true">
+        <div className="login-blob login-blob-a" />
+        <div className="login-blob login-blob-b" />
+        <div className="login-dot-grid" />
+        <span className="login-decor-icon icon-heart"><HeartPulse size={26} /></span>
+        <span className="login-decor-icon icon-plus-1"><Plus size={22} /></span>
+        <span className="login-decor-icon icon-plus-2"><Plus size={26} /></span>
+        <span className="login-decor-icon icon-plus-3"><Plus size={18} /></span>
+        <div className="login-character-slot" />
+        <div className="login-corner-clipboard"><ClipboardPlus size={20} /></div>
+      </div>
 
-        <div className="login-brand">
-          <span className="brand-mark">
-            <Activity size={22} />
-          </span>
-          <div>
-            <h1>Join Sympra</h1>
-            <p>Create your healthcare account</p>
-          </div>
-        </div>
+      <div className="login-form-panel">
+        <div className="login-card">
+          <Link to="/login" className="back-link">
+            <ArrowLeft size={16} /> Back to Login
+          </Link>
 
-        <div className="healthcare-header">
-          <h2>Sign Up</h2>
-            <p>Register your healthcare organization. Administrator access is granted separately.</p>
-        </div>
-
-        <form onSubmit={handleSubmit} className="login-form">
-          <label>
-            Full Name
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-              placeholder="Dr. John Doe"
-            />
-          </label>
-          <label>
-            Email
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              placeholder="doctor@clinic.com"
-            />
-          </label>
-          <label>
-            Password
-            <div className="password-input-wrap">
-              <input
-                type={showPassword ? 'text' : 'password'}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                placeholder="••••••••"
-                minLength={6}
-              />
-              <button
-                type="button"
-                className="password-toggle"
-                onClick={() => setShowPassword((prev) => !prev)}
-                aria-label={showPassword ? 'Hide password' : 'Show password'}
-                tabIndex={-1}
-              >
-                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-              </button>
+          <div className="login-brand">
+            <span className="brand-mark">
+              <Activity size={22} />
+            </span>
+            <div>
+              <h1>Join Sympra</h1>
+              <p>Create your healthcare account</p>
             </div>
-          </label>
-          <label>
-            Role
-            <select value={role} onChange={(e) => setRole(e.target.value)} required>
-              <option value="clinic">Clinic Doctor</option>
-              <option value="hospital">Hospital</option>
-              <option value="lab">Laboratory</option>
-            </select>
-          </label>
-          <label>
-            Organization
-            <input
-              type="text"
-              value={organization}
-              onChange={(e) => setOrganization(e.target.value)}
-              required
-              placeholder="City Clinic"
-            />
-          </label>
-          {error && <p className="form-error">{error}</p>}
-          <button type="submit" className="btn-primary" disabled={loading}>
-            {loading ? <Loader2 className="spin" size={18} /> : 'Create Account'}
-          </button>
-        </form>
+          </div>
 
-        <label className="mode-toggle login-toggle">
-          <span>{theme === 'dark' ? 'Dark Mode' : 'Light Mode'}</span>
-          <input type="checkbox" checked={theme === 'dark'} onChange={toggleTheme} />
-        </label>
+          <div className="healthcare-header">
+            <h2>Sign Up</h2>
+            <p>Register your healthcare organization. Administrator access is granted separately.</p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="login-form">
+            <label>
+              Full Name
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+                placeholder="Dr. John Doe"
+              />
+            </label>
+            <label>
+              Email
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                placeholder="doctor@clinic.com"
+              />
+            </label>
+            <label>
+              Password
+              <div className="password-input-wrap">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  placeholder="••••••••"
+                  minLength={6}
+                />
+                <button
+                  type="button"
+                  className="password-toggle"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  tabIndex={-1}
+                >
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
+            </label>
+            <label>
+              Role
+              <select value={role} onChange={(e) => setRole(e.target.value)} required>
+                <option value="clinic">Clinic Doctor</option>
+                <option value="hospital">Hospital</option>
+                <option value="lab">Laboratory</option>
+              </select>
+            </label>
+            <label>
+              Organization
+              <input
+                type="text"
+                value={organization}
+                onChange={(e) => setOrganization(e.target.value)}
+                required
+                placeholder="City Clinic"
+              />
+            </label>
+            {error && <p className="form-error">{error}</p>}
+            <button type="submit" className="btn-primary login-submit" disabled={loading}>
+              {loading ? <Loader2 className="spin" size={18} /> : 'Create Account'}
+            </button>
+          </form>
+
+          <label className="mode-toggle login-toggle">
+            <span>{theme === 'dark' ? 'Dark Mode' : 'Light Mode'}</span>
+            <input type="checkbox" checked={theme === 'dark'} onChange={toggleTheme} />
+          </label>
+        </div>
       </div>
     </div>
   );
 }
+
