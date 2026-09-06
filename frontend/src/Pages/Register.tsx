@@ -32,7 +32,7 @@ export default function Register() {
   };
 
   return (
-    <div className="login-page">
+    <div className="login-page single-column">
       <div className="login-card">
         <Link to="/login" className="back-link">
           <ArrowLeft size={16} /> Back to Login

@@ -1043,7 +1043,19 @@ tbody tr:hover { background: var(--primary-soft); }
   min-height: 100vh;
   display: grid;
   grid-template-columns: 1.05fr 1fr;
-  background: var(--bg);
+  background-color: var(--bg);
+  background-image: url('/login-background.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+/* Used by pages (e.g. Register) that only render one panel —
+   no illustration side — so the card centers across the full
+   viewport instead of sitting in the first of two grid columns. */
+.login-page.single-column {
+  grid-template-columns: 1fr;
+  place-items: center;
 }
 
 .login-illustration-panel {
@@ -1052,11 +1064,6 @@ tbody tr:hover { background: var(--primary-soft); }
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: var(--bg);
-  background-image: url('/login-background.png');
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
   animation: login-visual-reveal 0.7s ease-out both;
 }
 
