@@ -1043,11 +1043,7 @@ tbody tr:hover { background: var(--primary-soft); }
   min-height: 100vh;
   display: grid;
   grid-template-columns: 1.05fr 1fr;
-  background-color: var(--bg);
-  background-image: url('/login-background.png');
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
+  background: var(--bg);
 }
 
 /* Used by pages (e.g. Register) that only render one panel —
@@ -1064,7 +1060,19 @@ tbody tr:hover { background: var(--primary-soft); }
   display: flex;
   align-items: center;
   justify-content: center;
+  background-color: var(--bg);
+  background-image: url('/login-background.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
   animation: login-visual-reveal 0.7s ease-out both;
+}
+
+[data-theme='dark'] .login-illustration-panel {
+  background-color: #08172e;
+  background-image: url('/login-background-dark.png');
+  background-size: auto 100%;
+  background-position: left center;
 }
 
 .login-blob {
@@ -1173,11 +1181,24 @@ tbody tr:hover { background: var(--primary-soft); }
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 2.25rem;
+  padding: 2.5rem;
   width: 100%;
-  max-width: 400px;
+  max-width: 440px;
   box-shadow: var(--shadow-lg);
   animation: login-card-reveal 0.65s ease-out both;
+}
+
+[data-theme='dark'] .login-page {
+  background: #08172e;
+}
+
+[data-theme='dark'] .login-form-panel {
+  background: #08172e;
+}
+
+[data-theme='dark'] .login-card {
+  background: #0c1b31;
+  border-color: #29466f;
 }
 
 .login-brand {
