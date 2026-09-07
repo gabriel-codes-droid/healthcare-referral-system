@@ -1069,9 +1069,9 @@ tbody tr:hover { background: var(--primary-soft); }
 }
 
 [data-theme='dark'] .login-page {
-  background-color: #111c37;
+  background-color: #0a1428;
   background-image: url('/login-background-dark.png');
-  background-size: auto 100%;
+  background-size: cover;
   background-position: left center;
   background-repeat: no-repeat;
 }
